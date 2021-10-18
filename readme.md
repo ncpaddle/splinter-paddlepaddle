@@ -1,0 +1,2 @@
+- `finetuning`是代码文件夹；`mrqa-few-shot`是数据集文件夹；`splinter`是模型参数及配置。
+- 
