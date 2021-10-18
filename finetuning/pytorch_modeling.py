@@ -116,6 +116,7 @@ class ModelWithQASSHead(BertPreTrainedModel):
         encoder = self.get_encoder()
         outputs = encoder(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         sequence_output = outputs[0]  # [batch_size, max_length, dim]
+        return sequence_output
 
         cls = self.get_cls()
         start_logits, end_logits = cls(sequence_output, masked_positions)

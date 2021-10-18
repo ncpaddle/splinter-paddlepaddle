@@ -75,6 +75,7 @@ class ModelWithQASSHead(BertPretrainedModel):
         attention_mask_expand = paddle.unsqueeze(attention_mask, axis=[1, 2])
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask_expand, token_type_ids=token_type_ids)
         sequence_output = outputs[0]  # [batch_size, max_length, dim]
+        return sequence_output
         start_logits, end_logits = self.cls(sequence_output, masked_positions)
 
         if mask_positions_were_none:
