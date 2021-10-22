@@ -41,15 +41,21 @@ class ModelWithQASSHead(BertPretrainedModel):
                  mask_id=103, question_token_id=104, sep_id=102, initialize_new_qass=False):
         super(BertPretrainedModel, self).__init__()
         self.bert = bert
-        self.cls = ClassificationHead()  # if not self.initialize_new_qass else None
+        self.initialize_new_qass = initialize_new_qass
+        self.cls = ClassificationHead() if not self.initialize_new_qass else None
+        self.new_cls = ClassificationHead() if self.initialize_new_qass else None
 
         self.sep_id = sep_id
         self.mask_id = mask_id
         self.question_token_id = question_token_id
-        self.initialize_new_qass = initialize_new_qass
+
         self.replace_mask_with_question_token = replace_mask_with_question_token
 
-        self.apply(self.init_weights)
+
+    def get_cls(self):
+        if self.initialize_new_qass:
+            return self.new_cls
+        return self.cls
 
 
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
@@ -75,8 +81,9 @@ class ModelWithQASSHead(BertPretrainedModel):
         attention_mask_expand = paddle.unsqueeze(attention_mask, axis=[1, 2])
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask_expand, token_type_ids=token_type_ids)
         sequence_output = outputs[0]  # [batch_size, max_length, dim]
-        return sequence_output
-        start_logits, end_logits = self.cls(sequence_output, masked_positions)
+
+        cls = self.get_cls()
+        start_logits, end_logits = cls(sequence_output, masked_positions)
 
         if mask_positions_were_none:
             start_logits, end_logits = start_logits.squeeze(1), end_logits.squeeze(1)
@@ -108,7 +115,8 @@ class FullyConnectedLayer(nn.Layer):
         super(FullyConnectedLayer, self).__init__()
         self.input_dim = input_dim
         self.output_dim = output_dim
-        self.dense = nn.Linear(in_features=self.input_dim, out_features=self.output_dim)
+        self.dense = nn.Linear(in_features=self.input_dim, out_features=self.output_dim,
+                               weight_attr=nn.initializer.KaimingUniform(), bias_attr=True)
         self.act_fn = nn.GELU()
         self.LayerNorm = nn.LayerNorm(self.output_dim)
 

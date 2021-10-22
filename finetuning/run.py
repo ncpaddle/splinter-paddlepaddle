@@ -64,11 +64,11 @@ def to_list(tensor):
 
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
-    # if args.local_rank in [-1, 0]:
-    # tb_writer = SummaryWriter()
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
-    # train_sampler = RandomSampler(train_dataset) #if args.local_rank == -1 else DistributedSampler(train_dataset)
+    # train_sampler = paddle.io.RandomSampler(train_dataset) #if args.local_rank == -1 else DistributedSampler(train_dataset)
+    # train_batch_sampler = paddle.io.BatchSampler(sampler=train_sampler, batch_size=args.train_batch_size)
+    # train_dataloader = DataLoader(train_dataset, batch_sampler=train_batch_sampler)
     train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size)
 
     if args.max_steps > 0:
@@ -81,27 +81,24 @@ def train(args, train_dataset, model, tokenizer):
         t_total = args.min_steps
         args.num_train_epochs = args.min_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
 
-
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
-        {
-            "params": [p for n, p in model.named_parameters() if not any(nd in n for nd in no_decay)],
-            "weight_decay": args.weight_decay,
-        },
-        {"params": [p for n, p in model.named_parameters() if any(nd in n for nd in no_decay)], "weight_decay": 0.0},
+        p.name for n, p in model.named_parameters() if not any (nd in n for nd in ['bias', 'Norm'])
     ]
     clip = paddle.nn.ClipGradByNorm(clip_norm=args.max_grad_norm)
 
-    optimizer = AdamW(parameters=optimizer_grouped_parameters, learning_rate=args.learning_rate, epsilon=args.adam_epsilon,grad_clip=clip)#transformer
+    # adamw parameters不支持字典
+    optimizer = AdamW(
+        parameters=model.parameters(),
+        weight_decay=args.weight_decay,
+        apply_decay_param_fun=lambda x: x in optimizer_grouped_parameters,
+        learning_rate=args.learning_rate,
+        epsilon=args.adam_epsilon,
+        grad_clip=clip)#transformer
 
-    scheduler = LinearDecayWithWarmup(learning_rate=int(args.warmup_ratio * t_total),total_steps=t_total)
+    scheduler = LinearDecayWithWarmup(learning_rate=args.learning_rate, warmup=int(args.warmup_ratio * t_total),total_steps=t_total)
     # Check if saved optimizer or scheduler states exist
-    if os.path.isfile(os.path.join(args.model_name_or_path, "optimizer.pt")) and os.path.isfile(
-            os.path.join(args.model_name_or_path, "scheduler.pt")
-    ):
-        optimizer.load_state_dict(paddle.load(os.path.join(args.model_name_or_path, "optimizer.pt")))
-        scheduler.load_state_dict(paddle.load(os.path.join(args.model_name_or_path, "scheduler.pt")))
 
     # Train!
     logger.info("***** Running training *****")
@@ -135,7 +132,6 @@ def train(args, train_dataset, model, tokenizer):
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration")
         for step, batch in enumerate(epoch_iterator):
-
             # Skip past any already trained steps if resuming training
             if steps_trained_in_current_epoch > 0:
                 steps_trained_in_current_epoch -= 1
@@ -143,7 +139,10 @@ def train(args, train_dataset, model, tokenizer):
 
             model.train()
             # batch = tuple(t.to(args.device) for t in batch)
+            batch[3] = paddle.squeeze(batch[3], -1)
+            batch[4] = paddle.squeeze(batch[4], -1)
             batch = tuple(t for t in batch)
+
             inputs = {
                 "input_ids": batch[0],
                 "attention_mask": batch[1],
@@ -152,12 +151,15 @@ def train(args, train_dataset, model, tokenizer):
                 "end_positions": batch[4],
             }
 
+            # inputs = {k: v.numpy() for (k, v) in inputs.items()}
+            # import pickle
+            # pickle.dump(inputs, open('input_data_paddle.bin', 'wb'))
+            # assert 1 == 2
             outputs = model(**inputs)
             loss = outputs[0]
 
             if args.gradient_accumulation_steps > 1:
                 loss = loss / args.gradient_accumulation_steps
-
 
             loss.backward()
 
@@ -216,6 +218,7 @@ def train(args, train_dataset, model, tokenizer):
             if args.max_steps > 0 and global_step > args.max_steps:
                 epoch_iterator.close()
                 break
+
         if args.max_steps > 0 and global_step > args.max_steps:
             train_iterator.close()
             break
@@ -226,7 +229,6 @@ def train(args, train_dataset, model, tokenizer):
                 best_results = results
                 best_results["global_step"] = global_step
                 logger.info("Results: {}".format(best_results))
-
     best_results_path = os.path.join(args.output_dir, "best_training_eval_results.json")
     json.dump(best_results, open(best_results_path, 'w'))
 
@@ -281,7 +283,7 @@ def evaluate(args, model, tokenizer, prefix=""):
 
     for batch in tqdm(eval_dataloader, desc="Evaluating"):
         model.eval()
-        batch = tuple(t.to(args.device) for t in batch)
+        batch = tuple(t for t in batch)
         with paddle.no_grad():
             inputs = {
                 "input_ids": batch[0],
@@ -398,9 +400,10 @@ def evaluate(args, model, tokenizer, prefix=""):
     return results
 
 
-def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=False, use_cache=True):
+def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=False, use_cache=False):
     # Load data features from cache or dataset file
     cache_name = args.tokenizer_name if args.tokenizer_name else list(filter(None, args.model_name_or_path.split("/"))).pop()
+    # print(cache_name)  # ../splinter
     if args.dataset_format == "mrqa":
         cache_name = f"{cache_name}_{args.dataset}"
     else:
@@ -414,6 +417,7 @@ def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=Fal
             str(args.max_seq_length),
         ),
     )
+    # print(cached_features_file)  # .\cached_train_../splinter_squad_384
 
     # Init features and dataset from cache if it exists
     if use_cache and os.path.exists(cached_features_file) and not args.overwrite_cache:
@@ -427,6 +431,7 @@ def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=Fal
     else:
         logger.info("Creating features from dataset file at %s", input_dir)
 
+        # 直接走else
         if not args.data_dir and ((evaluate and not args.predict_file) or (not evaluate and not args.train_file)):
             try:
                 import tensorflow_datasets as tfds
@@ -446,8 +451,11 @@ def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=Fal
             if evaluate:
                 examples = processor.get_dev_examples(args.data_dir, filename=args.predict_file)
             else:
+                # print(args.data_dir, args.train_file)
+                # None ../mrqa-few-shot/squad/squad-train-seed-42-num-examples-16_qass.jsonl
                 examples = processor.get_train_examples(args.data_dir, filename=args.train_file)
 
+        # doc_stride 128    max_query_length 64   max_seq_length 384
         features, dataset = squad_convert_examples_to_features(
             examples=examples,
             tokenizer=tokenizer,
@@ -720,7 +728,8 @@ def main():
 
     args.n_gpu = 1
     # args.device = torch.device("cuda:1")
-    args.device = "gpu:1"
+    # args.device = "gpu:1"
+    args.device = 'cpu'
     paddle.set_device(args.device)
 
     with open(os.path.join(args.output_dir, 'args.pkl'), 'wb') as f:
@@ -754,8 +763,7 @@ def main():
     if args.qass_head:
         model = ModelWithQASSHead.from_pretrained(args.model_name_or_path,
                                                   replace_mask_with_question_token=True,
-                                                  mask_id=103, question_token_id=104, initialize_new_qass=args.initialize_new_qass,
-                                                  cache_dir=args.cache_dir if args.cache_dir else None)
+                                                  mask_id=103, question_token_id=104, initialize_new_qass=args.initialize_new_qass,)
 
     logger.info("Training/evaluation parameters %s", args)
 
@@ -790,7 +798,7 @@ def main():
                                                       cache_dir=args.cache_dir if args.cache_dir else None)
         # else:
         #     model = AutoModelForQuestionAnswering.from_pretrained(args.output_dir, cache_dir=args.cache_dir if args.cache_dir else None)  # , force_download=True)
-        tokenizer = BertTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case, cache_dir=args.cache_dir if args.cache_dir else None)
+        tokenizer = BertTokenizer.from_pretrained(args.output_dir, do_lower_case=args.do_lower_case)
         # model.to(args.device)
 
     # Evaluation - we can ask to evaluate all the checkpoints (sub-directories) in a directory

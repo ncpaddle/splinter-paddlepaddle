@@ -1,0 +1,3 @@
+[2021/10/22 17:28:16] root INFO: sequence_output: 
+[2021/10/22 17:28:16] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/22 17:28:16] root INFO: diff check passed

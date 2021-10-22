@@ -83,7 +83,6 @@ class WordEmbedding(nn.Layer):
         bos_id (int, optional):
             The start token id and also is used as padding id. Defaults to 0.
     """
-
     def __init__(self, vocab_size, emb_dim, bos_id=0):
         super(WordEmbedding, self).__init__()
         self.emb_dim = emb_dim

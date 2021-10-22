@@ -19,6 +19,8 @@ import numpy as np
 import os
 import warnings
 
+def func():
+    return 100
 
 class Vocab(object):
     """
@@ -97,8 +99,8 @@ class Vocab(object):
                 for token, idx in token_to_idx.items()
             }
             if unk_token:
-                unk_index = self._token_to_idx[unk_token]
-                self._token_to_idx = collections.defaultdict(lambda: unk_index)
+                unk_index = self._token_to_idx[unk_token] # unk_index: 100
+                self._token_to_idx = collections.defaultdict(func)
                 self._token_to_idx.update(token_to_idx)
         else:
             self._idx_to_token = {

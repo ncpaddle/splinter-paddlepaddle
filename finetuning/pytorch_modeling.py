@@ -6,7 +6,7 @@ from torch.nn.parameter import Parameter
 from transformers import BertPreTrainedModel, BertModel, RobertaModel, BertConfig
 
 
-config = BertConfig.from_pretrained('../splinter')
+config = BertConfig.from_pretrained('../../splinter')
 
 
 
@@ -90,8 +90,6 @@ class ModelWithQASSHead(BertPreTrainedModel):
         self.question_token_id = question_token_id
         self.sep_id = sep_id
 
-        self.init_weights()
-
     def get_cls(self):
         return self.cls if not self.initialize_new_qass else self.new_cls
 
@@ -116,7 +114,6 @@ class ModelWithQASSHead(BertPreTrainedModel):
         encoder = self.get_encoder()
         outputs = encoder(input_ids=input_ids, attention_mask=attention_mask, token_type_ids=token_type_ids)
         sequence_output = outputs[0]  # [batch_size, max_length, dim]
-        return sequence_output
 
         cls = self.get_cls()
         start_logits, end_logits = cls(sequence_output, masked_positions)

@@ -201,37 +201,6 @@ class PretrainedTokenizer(object):
     padding_side = 'right'
     pad_token_type_id = 0
 
-    @property
-    def max_len_single_sentence(self):
-        return self.model_max_length - self.num_special_tokens_to_add(pair=False)
-
-    @property
-    def max_len_sentences_pair(self):
-        return self.model_max_length - self.num_special_tokens_to_add(pair=True)
-
-    @max_len_single_sentence.setter
-    def max_len_single_sentence(self, value):
-        """ For backward compatibility, allow to try to setup 'max_len_single_sentence' """
-        if value == self.model_max_length - self.num_special_tokens_to_add(pair=False):
-            logger.warning(
-                "Setting 'max_len_single_sentence' is now deprecated. " "This value is automatically set up."
-            )
-        else:
-            raise ValueError(
-                "Setting 'max_len_single_sentence' is now deprecated. " "This value is automatically set up."
-            )
-
-    @max_len_sentences_pair.setter
-    def max_len_sentences_pair(self, value):
-        """ For backward compatibility, allow to try to setup 'max_len_sentences_pair' """
-        if value == self.model_max_length - self.num_special_tokens_to_add(pair=True):
-            logger.warning(
-                "Setting 'max_len_sentences_pair' is now deprecated. " "This value is automatically set up."
-            )
-        else:
-            raise ValueError(
-                "Setting 'max_len_sentences_pair' is now deprecated. " "This value is automatically set up."
-            )
 
 
     def _wrap_init(self, original_init, *args, **kwargs):
@@ -1051,7 +1020,6 @@ class PretrainedTokenizer(object):
                 encoded_inputs["num_truncated_tokens"] = total_len - max_seq_len
 
         # Add special tokens
-
         sequence = self.build_inputs_with_special_tokens(ids, pair_ids)
         token_type_ids = self.create_token_type_ids_from_sequences(ids,
                                                                    pair_ids)
@@ -1114,8 +1082,66 @@ class PretrainedTokenizer(object):
         if return_position_ids:
             encoded_inputs["position_ids"] = list(
                 range(len(encoded_inputs["input_ids"])))
-
         return encoded_inputs
+
+
+    def encode_low(self,
+               text,
+               text_pair=None,
+               max_seq_len=512,
+               pad_to_max_seq_len=False,
+               truncation_strategy="longest_first",
+               return_position_ids=False,
+               return_token_type_ids=True,
+               return_attention_mask=True,
+               return_length=False,
+               return_overflowing_tokens=False,
+               return_special_tokens_mask=False,
+               stride=0):
+
+        if '[MASK].' in text:
+            text = text[:-7]
+        def get_input_ids(text):
+            if isinstance(text, str):
+                tokens = self._tokenize(text)
+                return self.convert_tokens_to_ids(tokens)
+            elif isinstance(text,
+                            (list, tuple)) and len(text) > 0 and isinstance(
+                                text[0], str):
+                return self.convert_tokens_to_ids(text)
+            elif isinstance(text,
+                            (list, tuple)) and len(text) > 0 and isinstance(
+                                text[0], int):
+                return text
+            else:
+                raise ValueError(
+                    "Input is not valid. Should be a string, a list/tuple of strings or a list/tuple of integers."
+                )
+        ids = get_input_ids(text)
+        pair_ids = get_input_ids(text_pair) if text_pair is not None else None
+
+        pair = bool(pair_ids is not None)
+        len_ids = len(ids)
+        len_pair_ids = len(pair_ids) if pair else 0
+
+        encoded_inputs = {}
+
+        # Truncation: Handle max sequence length
+        total_len = len_ids + len_pair_ids + (self.num_special_tokens_to_add(
+            pair=pair))
+        if max_seq_len and total_len > max_seq_len:
+
+            ids, pair_ids, overflowing_tokens = self.truncate_sequences(
+                ids,
+                pair_ids=pair_ids,
+                num_tokens_to_remove=total_len - max_seq_len,
+                truncation_strategy=truncation_strategy, stride=stride)
+            if return_overflowing_tokens:
+                encoded_inputs["overflowing_tokens"] = overflowing_tokens
+                encoded_inputs["num_truncated_tokens"] = total_len - max_seq_len
+        ids.append(103)
+        ids.append(119)
+        return ids
 
     def batch_encode(self,
                      batch_text_or_text_pairs,

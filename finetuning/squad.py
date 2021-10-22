@@ -160,7 +160,7 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
 
     spans = []
 
-    truncated_query = tokenizer.encode(example.question_text, max_seq_len=max_query_length)['input_ids']
+    truncated_query = tokenizer.encode_low(example.question_text, max_seq_len=max_query_length)
     sequence_added_tokens = (
         512 - 510 + 1
         if "roberta" in str(type(tokenizer)) or "camembert" in str(type(tokenizer))
@@ -180,6 +180,7 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
             stride=max_seq_length - doc_stride - len(truncated_query) - sequence_pair_added_tokens,
             truncation_strategy="only_second" if tokenizer.padding_side == "right" else "only_first",
             return_token_type_ids=True,
+            return_special_tokens_mask=True,
         )
 
         paragraph_len = min(
@@ -345,22 +346,39 @@ def squad_convert_examples_to_features(
     # Defining helper methods
     features = []
     threads = min(threads, cpu_count())
-    with Pool(threads, initializer=squad_convert_example_to_features_init, initargs=(tokenizer,)) as p:
-        annotate_ = partial(
-            squad_convert_example_to_features,
-            max_seq_length=max_seq_length,
-            doc_stride=doc_stride,
-            max_query_length=max_query_length,
-            is_training=is_training,
-        )
-        features = list(
-            tqdm(
-                p.imap(annotate_, examples, chunksize=32),
-                total=len(examples),
-                desc="convert squad examples to features",
-                disable=not tqdm_enabled,
-            )
-        )
+
+    # with Pool(threads, initializer=squad_convert_example_to_features_init, initargs=(tokenizer,)) as p:
+    #     annotate_ = partial(
+    #         squad_convert_example_to_features,
+    #         max_seq_length=max_seq_length,
+    #         doc_stride=doc_stride,
+    #         max_query_length=max_query_length,
+    #         is_training=is_training,
+    #     )
+    #     print(len(examples))
+    #     assert 1 == 2
+    #     features = list(
+    #         tqdm(
+    #             p.imap(annotate_, examples, chunksize=32),
+    #             total=len(examples),
+    #             desc="convert squad examples to features",
+    #             disable=not tqdm_enabled,
+    #         )
+    #     )
+
+    squad_convert_example_to_features_init(tokenizer)
+    annotate_ = partial(
+        squad_convert_example_to_features,
+        max_seq_length=max_seq_length,
+        doc_stride=doc_stride,
+        max_query_length=max_query_length,
+        is_training=is_training,
+    )
+    features = []
+    for e in examples:
+        f = annotate_(e)
+        features.append(f)
+
     new_features = []
     unique_id = 1000000000
     example_index = 0
@@ -387,9 +405,10 @@ def squad_convert_examples_to_features(
         all_is_impossible = paddle.to_tensor([f.is_impossible for f in features], dtype=paddle.float32)
 
         if not is_training:
-            all_feature_index = paddle.arange(all_input_ids.size(0), dtype=paddle.int64)
+            all_feature_index = paddle.arange(all_input_ids.shape[0], dtype=paddle.int64)
+            print(all_feature_index)
             dataset = TensorDataset(
-                all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask
+                [all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask]
             )
         else:
             all_start_positions = paddle.to_tensor([f.start_position for f in features], dtype=paddle.int64)
