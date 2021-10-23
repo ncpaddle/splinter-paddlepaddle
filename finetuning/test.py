@@ -2,8 +2,5 @@ from paddlenlp.transformers import BertTokenizer
 import paddle
 
 
-a=paddle.load('a.bin')
-b=paddle.load('b.bin')
+a=paddle.load('eval_res_paddle.bin')
 print(a)
-print('-------')
-print(b)

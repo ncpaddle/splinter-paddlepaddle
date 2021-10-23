@@ -86,7 +86,7 @@ def train(args, train_dataset, model, tokenizer):
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
-        p.name for n, p in model.named_parameters() if not any (nd in n for nd in ['bias', 'Norm'])
+        p.name for n, p in model.named_parameters() if not any (nd in n for nd in ['bias', 'LayerNorm.weight'])
     ]
     clip = paddle.nn.ClipGradByNorm(clip_norm=args.max_grad_norm)
 
@@ -99,7 +99,8 @@ def train(args, train_dataset, model, tokenizer):
         apply_decay_param_fun=lambda x: x in optimizer_grouped_parameters,
         learning_rate=scheduler,
         epsilon=args.adam_epsilon,
-        grad_clip=clip)
+        grad_clip=clip,
+        weight_decay=args.weight_decay)
 
 
 
@@ -915,7 +916,27 @@ def get_test_data():
 
 
 
+def get_test_metric():
+    args = getParser().parse_args()
+
+    tokenizer = BertTokenizer.from_pretrained(
+        args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
+    )
+    if args.qass_head:
+        model = ModelWithQASSHead.from_pretrained(args.model_name_or_path,
+                                                  replace_mask_with_question_token=True,
+                                                  mask_id=103, question_token_id=104,
+                                                  )
+    args.n_gpu = 1
+    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+    model.eval()
+    result = evaluate(args, model, tokenizer)
+    print(result)
+    paddle.save(result, 'eval_res_paddle_50.bin')
+
+
+
 if __name__ == "__main__":
-    main()
-    # get_test_data()
+    # main()
+    get_test_metric()
 

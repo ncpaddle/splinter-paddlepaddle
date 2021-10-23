@@ -1043,6 +1043,30 @@ def get_test_data():
     rl.add('end_pos_list2', np.array(end_pos_list2))
     rl.save('test_data_torch.npy')
 
+
+def get_test_metric():
+    from reprod_log import ReprodLogger, ReprodDiffHelper
+    rl = ReprodLogger()
+
+    args = getParser().parse_args()
+    tokenizer = BertTokenizer.from_pretrained(
+        args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
+    )
+    if args.qass_head:
+        model = ModelWithQASSHead.from_pretrained(args.model_name_or_path,
+                                                  replace_mask_with_question_token=True,
+                                                  mask_id=103, question_token_id=104,
+                                                  )
+    args.n_gpu = 1
+    args.device = torch.device('cpu')
+    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+    model.eval()
+    result = evaluate(args, model, tokenizer)
+    print(result)
+    torch.save(result, 'eval_res_torch_50.bin')
+
+
+
 if __name__ == "__main__":
-    main()
-    # get_test_data()
+    # main()
+    get_test_metric()
