@@ -369,9 +369,11 @@ class BertTokenizer(PretrainedTokenizer):
     }
     padding_side = 'right'
 
+
     def __init__(self,
                  vocab_file,
                  do_lower_case=True,
+                 model_max_length=512,
                  unk_token="[UNK]",
                  sep_token="[SEP]",
                  pad_token="[PAD]",
@@ -388,6 +390,23 @@ class BertTokenizer(PretrainedTokenizer):
         self.basic_tokenizer = BasicTokenizer(do_lower_case=do_lower_case)
         self.wordpiece_tokenizer = WordpieceTokenizer(
             vocab=self.vocab, unk_token=unk_token)
+        self.max_seq_len=model_max_length
+
+    @property
+    def max_len(self):
+        """ Kept here for backward compatibility.
+            Now renamed to `model_max_length` to avoid ambiguity.
+        """
+        return self.max_seq_len
+
+    @property
+    def max_len_single_sentence(self):
+        return self.max_seq_len - self.num_special_tokens_to_add(pair=False)
+
+    @property
+    def max_len_sentences_pair(self):
+        return self.max_seq_len - self.num_special_tokens_to_add(pair=True)
+
 
     @property
     def vocab_size(self):
@@ -472,6 +491,8 @@ class BertTokenizer(PretrainedTokenizer):
 
         out_string = " ".join(tokens).replace(" ##", "").strip()
         return out_string
+
+
 
     def num_special_tokens_to_add(self, pair=False):
         """

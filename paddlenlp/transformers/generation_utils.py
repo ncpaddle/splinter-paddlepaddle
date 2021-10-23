@@ -272,7 +272,7 @@ class GenerationMixin(object):
     r"""
     This class implements the interface for generation task. 
     
-    It's used as the base class of `paddlenlp.transformers.PretrainedModel 
+    It's used as the base class of `paddlenlp.transformers.PretrainedModel
     <https://paddlenlp.readthedocs.io/zh/latest/source/paddlenlp.transformers.model_utils.html>`__.
     """
 

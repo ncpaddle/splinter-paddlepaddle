@@ -40,7 +40,7 @@ class UnifiedTransformerTokenizer(PretrainedTokenizer):
     `SentencePiece <https://github.com/google/sentencepiece>`__.
 
     This tokenizer inherits from 
-    :class:`~paddlenlp.transformers.tokenizer_utils.PretrainedTokenizer` which 
+    :class:`~paddlenlp.transformers.tokenizer_utils.PretrainedTokenizer` which
     contains most of the main methods. For more information regarding those 
     methods, please refer to this superclass.
 

@@ -34,7 +34,7 @@ class UnifiedTransformerPretrainedModel(PretrainedModel):
     `pretrained_resource_files_map`, `pretrained_init_configuration`, 
     `base_model_prefix` for downloading and loading pretrained models. 
     
-    Refer to :class:`~paddlenlp.transformers.model_utils.PretrainedModel` for 
+    Refer to :class:`~paddlenlp.transformers.model_utils.PretrainedModel` for
     more details.
     """
 
@@ -159,7 +159,7 @@ class UnifiedTransformerModel(UnifiedTransformerPretrainedModel):
     specific head on top.
 
     This model inherits from 
-    :class:`~paddlenlp.transformers.model_utils.PretrainedModel`. Refer to the 
+    :class:`~paddlenlp.transformers.model_utils.PretrainedModel`. Refer to the
     superclass documentation for the generic methods.
 
     This model is also a `paddle.nn.Layer <https://www.paddlepaddle.org.cn

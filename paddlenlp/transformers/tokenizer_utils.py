@@ -201,8 +201,6 @@ class PretrainedTokenizer(object):
     padding_side = 'right'
     pad_token_type_id = 0
 
-
-
     def _wrap_init(self, original_init, *args, **kwargs):
         """
         It would be hooked after `__init__` to add specials tokens (arguments of
@@ -388,6 +386,7 @@ class PretrainedTokenizer(object):
                 return_length=return_length,
                 return_overflowing_tokens=return_overflowing_tokens,
                 return_special_tokens_mask=return_special_tokens_mask)
+
 
     @property
     def all_special_tokens(self):

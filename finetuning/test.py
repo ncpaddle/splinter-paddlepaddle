@@ -1,7 +1,9 @@
 from paddlenlp.transformers import BertTokenizer
+import paddle
 
 
-tok = BertTokenizer.from_pretrained('bert-base-cased')
-
-a = tok.encode([['I', 'have', 'a', 'appe'], ['I', 'Chinese']])
+a=paddle.load('a.bin')
+b=paddle.load('b.bin')
 print(a)
+print('-------')
+print(b)

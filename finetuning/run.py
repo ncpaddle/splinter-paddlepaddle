@@ -25,27 +25,24 @@ import random
 import timeit
 import shutil
 import numpy as np
-# import torch
-# from torch.utils.data import DataLoader, RandomSampler, SequentialSampler
-from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm, trange
 from paddlenlp.transformers import BertTokenizer
 import paddle
 from paddle.io import DataLoader
 from paddle.optimizer import AdamW
-from squad import squad_convert_examples_to_features
+from finetuning.squad import squad_convert_examples_to_features
 
 from paddlenlp.transformers import LinearDecayWithWarmup
 
-from squad_metrics import (
+from finetuning.squad_metrics import (
     compute_predictions_log_probs,
     compute_predictions_logits,
     squad_evaluate,
     normalize_answer, compute_exact, compute_f1, make_eval_dict, merge_eval)
 
-from squad import SquadResult, SquadV1Processor, SquadV2Processor
-from modeling import ModelWithQASSHead
-from mrqa_processor import MRQAProcessor
+from finetuning.squad import SquadResult, SquadV1Processor, SquadV2Processor
+from finetuning.modeling import ModelWithQASSHead
+from finetuning.mrqa_processor import MRQAProcessor
 
 
 logger = logging.getLogger(__name__)
@@ -66,10 +63,10 @@ def train(args, train_dataset, model, tokenizer):
     """ Train the model """
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
-    # train_sampler = paddle.io.RandomSampler(train_dataset) #if args.local_rank == -1 else DistributedSampler(train_dataset)
-    # train_batch_sampler = paddle.io.BatchSampler(sampler=train_sampler, batch_size=args.train_batch_size)
-    # train_dataloader = DataLoader(train_dataset, batch_sampler=train_batch_sampler)
-    train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size)
+    train_sampler = paddle.io.RandomSampler(train_dataset) #if args.local_rank == -1 else DistributedSampler(train_dataset)
+    train_batch_sampler = paddle.io.BatchSampler(sampler=train_sampler, batch_size=args.train_batch_size)
+    train_dataloader = DataLoader(train_dataset, batch_sampler=train_batch_sampler)
+    # train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size)
 
     if args.max_steps > 0:
         t_total = args.max_steps
@@ -81,6 +78,11 @@ def train(args, train_dataset, model, tokenizer):
         t_total = args.min_steps
         args.num_train_epochs = args.min_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
 
+    # print(t_total)  # 200
+    # print(args.num_train_epochs)  # 17
+    # print(args.max_steps) # -1
+    # print(args.min_steps)  # 200
+
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
@@ -88,16 +90,19 @@ def train(args, train_dataset, model, tokenizer):
     ]
     clip = paddle.nn.ClipGradByNorm(clip_norm=args.max_grad_norm)
 
+    scheduler = LinearDecayWithWarmup(learning_rate=args.learning_rate, warmup=int(args.warmup_ratio * t_total),
+                                      total_steps=t_total)
+
     # adamw parameters不支持字典
     optimizer = AdamW(
         parameters=model.parameters(),
-        weight_decay=args.weight_decay,
         apply_decay_param_fun=lambda x: x in optimizer_grouped_parameters,
-        learning_rate=args.learning_rate,
+        learning_rate=scheduler,
         epsilon=args.adam_epsilon,
-        grad_clip=clip)#transformer
+        grad_clip=clip)
 
-    scheduler = LinearDecayWithWarmup(learning_rate=args.learning_rate, warmup=int(args.warmup_ratio * t_total),total_steps=t_total)
+
+
     # Check if saved optimizer or scheduler states exist
 
     # Train!
@@ -119,8 +124,8 @@ def train(args, train_dataset, model, tokenizer):
     logger.info("  Starting fine-tuning.")
 
     tr_loss, logging_loss = 0.0, 0.0
-    # model.zero_grad()##paddle wu
-    # model.clear_grad()  paddle的模型中没有对模型清零的
+
+
     train_iterator = trange(
         epochs_trained, int(args.num_train_epochs), desc="Epoch"
     )
@@ -129,9 +134,11 @@ def train(args, train_dataset, model, tokenizer):
 
     best_results = {"exact": 0, "f1": 0, "global_step": 0}
 
+
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration")
         for step, batch in enumerate(epoch_iterator):
+
             # Skip past any already trained steps if resuming training
             if steps_trained_in_current_epoch > 0:
                 steps_trained_in_current_epoch -= 1
@@ -151,11 +158,8 @@ def train(args, train_dataset, model, tokenizer):
                 "end_positions": batch[4],
             }
 
-            # inputs = {k: v.numpy() for (k, v) in inputs.items()}
-            # import pickle
-            # pickle.dump(inputs, open('input_data_paddle.bin', 'wb'))
-            # assert 1 == 2
             outputs = model(**inputs)
+
             loss = outputs[0]
 
             if args.gradient_accumulation_steps > 1:
@@ -165,22 +169,19 @@ def train(args, train_dataset, model, tokenizer):
 
             tr_loss += loss.item()
             if (step + 1) % args.gradient_accumulation_steps == 0:
-                # torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm) 初始化opt时使用
                 optimizer.step()
-                scheduler.step()  # Update learning rate schedule
-                # model.zero_grad()
                 optimizer.clear_grad()
                 global_step += 1
 
                 # Log metrics
-                if  args.logging_steps > 0 and global_step % args.logging_steps == 0:
+                if args.logging_steps > 0 and global_step % args.logging_steps == 0:
                     # tb_writer.add_scalar("lr", scheduler.get_lr()[0], global_step)
                     # tb_writer.add_scalar("loss", (tr_loss - logging_loss) / args.logging_steps, global_step)
                     logger.info(f"loss step {global_step}: {(tr_loss - logging_loss) / args.logging_steps}")
                     logging_loss = tr_loss
 
                 # Only evaluate when single GPU otherwise metrics may not average well
-                if  args.eval_steps > 0 and global_step % args.eval_steps == 0:
+                if args.eval_steps > 0 and global_step % args.eval_steps == 0:
                     results = evaluate(args, model, tokenizer)
                     # for key, value in results.items():
                     #     tb_writer.add_scalar("eval_{}".format(key), value, global_step)
@@ -196,7 +197,7 @@ def train(args, train_dataset, model, tokenizer):
                                     writer.write(f"{key} = {values}\n")
 
                 # Save model checkpoint 这部分并不会使用
-                if  args.save_steps > 0 and global_step % args.save_steps == 0:
+                if args.save_steps > 0 and global_step % args.save_steps == 0:
                     output_dir = os.path.join(args.output_dir, "checkpoint-{}".format(global_step))
                     if not os.path.exists(output_dir):
                         os.makedirs(output_dir)
@@ -209,9 +210,7 @@ def train(args, train_dataset, model, tokenizer):
                     paddle.save(args, os.path.join(output_dir, "training_args.bin"))
                     logger.info("Saving model checkpoint to %s", output_dir)
 
-                    # torch.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
                     paddle.save(optimizer.state_dict(), os.path.join(output_dir, "optimizer.pt"))
-                    # torch.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                     paddle.save(scheduler.state_dict(), os.path.join(output_dir, "scheduler.pt"))
                     logger.info("Saving optimizer and scheduler states to %s", output_dir)
 
@@ -290,7 +289,6 @@ def evaluate(args, model, tokenizer, prefix=""):
                 "attention_mask": batch[1],
                 "token_type_ids": batch[2],
             }
-            seq_len = inputs["input_ids"].size(1)
 
             if args.model_type in ["xlm", "roberta", "distilbert", "camembert"]:
                 del inputs["token_type_ids"]
@@ -615,7 +613,7 @@ def getParser():
         default=1,
         help="Number of updates steps to accumulate before performing a backward/update pass.",
     )
-    parser.add_argument("--weight_decay", default=0.0, type=float, help="Weight decay if we apply some.")
+    parser.add_argument("--weight_decay", default=0.01, type=float, help="Weight decay if we apply some.")
     parser.add_argument("--adam_epsilon", default=1e-8, type=float, help="Epsilon for Adam optimizer.")
     parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
     parser.add_argument(
@@ -850,5 +848,74 @@ def main():
     return results
 
 
+def get_test_data():
+    from reprod_log import ReprodLogger, ReprodDiffHelper
+    rl = ReprodLogger()
+
+    args = getParser().parse_args()
+    tokenizer = BertTokenizer.from_pretrained(
+        args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
+    )
+    if args.qass_head:
+        model = ModelWithQASSHead.from_pretrained(args.model_name_or_path,
+                                                  replace_mask_with_question_token=True,
+                                                  mask_id=103, question_token_id=104,
+                                                  initialize_new_qass=args.initialize_new_qass, )
+    model.eval()
+    dataset, examples, features = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=True,
+                                                          use_cache=args.use_cache)
+    args.n_gpu = 1
+    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
+    eval_dataloader = DataLoader(dataset, batch_size=args.eval_batch_size)
+
+    np.random.seed(42)
+    rand_nums = []
+    for i in range(5):
+        rand_nums.append(np.random.randint(0, len(dataset)))
+    # print(rand_nums) # [7270, 860, 5390, 5191, 5734]
+
+    # dataset: TensorDataset
+    input_ids_list = []
+    attention_mask_list = []
+    token_type_ids_list = []
+    start_pos_list = []
+    end_pos_list = []
+    for n in rand_nums:
+        input_ids_list.append(dataset[n][0].numpy().tolist())
+        attention_mask_list.append(dataset[n][1].numpy().tolist())
+        token_type_ids_list.append(dataset[n][2].numpy().tolist())
+        start_pos_list.append(dataset[n][3].numpy().tolist())
+        end_pos_list.append(dataset[n][4].numpy().tolist())
+    rl.add('input_ids_list', np.array(input_ids_list))
+    rl.add('attention_mask_list', np.array(attention_mask_list))
+    rl.add('token_type_ids_list', np.array(token_type_ids_list))
+    rl.add('start_pos_list', np.array(start_pos_list))
+    rl.add('end_pos_list', np.array(end_pos_list))
+
+    # eval_dataloader
+    input_ids_list2 = []
+    attention_mask_list2 = []
+    token_type_ids_list2 = []
+    start_pos_list2 = []
+    end_pos_list2 = []
+    for i, data in enumerate(eval_dataloader):
+        if i > 5:
+            break
+        input_ids_list2.append(data[0].numpy().tolist())
+        attention_mask_list2.append(data[1].numpy().tolist())
+        token_type_ids_list2.append(data[2].numpy().tolist())
+        start_pos_list2.append(data[3].numpy().tolist())
+        end_pos_list2.append(data[4].numpy().tolist())
+    rl.add('input_ids_list2', np.array(input_ids_list2))
+    rl.add('attention_mask_list2', np.array(attention_mask_list2))
+    rl.add('token_type_ids_list2', np.array(token_type_ids_list2))
+    rl.add('start_pos_list2', np.array(start_pos_list2))
+    rl.add('end_pos_list2', np.array(end_pos_list2))
+    rl.save('test_data_paddle.npy')
+
+
+
 if __name__ == "__main__":
     main()
+    # get_test_data()
+

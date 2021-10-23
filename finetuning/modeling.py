@@ -57,7 +57,6 @@ class ModelWithQASSHead(BertPretrainedModel):
             return self.new_cls
         return self.cls
 
-
     def forward(self, input_ids=None, attention_mask=None, token_type_ids=None,
                 masked_positions=None, start_positions=None, end_positions=None):
         if attention_mask is not None:
@@ -100,11 +99,10 @@ class ModelWithQASSHead(BertPretrainedModel):
             end_positions = paddle.clip(end_positions, 0, ignored_index)
 
             loss_fct = nn.CrossEntropyLoss(ignore_index=ignored_index)
-            start_loss = loss_fct(start_logits, start_positions)
-            end_loss = loss_fct(end_logits, end_positions)
+            start_loss = loss_fct(start_logits, paddle.to_tensor(start_positions, dtype=paddle.int64))
+            end_loss = loss_fct(end_logits, paddle.to_tensor(end_positions, dtype=paddle.int64))
 
             total_loss = (start_loss + end_loss) / 2
-
             outputs = (total_loss,) + outputs
 
         return outputs

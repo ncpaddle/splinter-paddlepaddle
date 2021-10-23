@@ -161,12 +161,17 @@ def squad_convert_example_to_features(example, max_seq_length, doc_stride, max_q
     spans = []
 
     truncated_query = tokenizer.encode_low(example.question_text, max_seq_len=max_query_length)
+    # sequence_added_tokens = (
+    #     512 - 510 + 1
+    #     if "roberta" in str(type(tokenizer)) or "camembert" in str(type(tokenizer))
+    #     else 512 - 510
+    # )
     sequence_added_tokens = (
-        512 - 510 + 1
+        tokenizer.max_seq_len -  tokenizer.max_len_single_sentence + 1
         if "roberta" in str(type(tokenizer)) or "camembert" in str(type(tokenizer))
-        else 512 - 510
+        else tokenizer.max_seq_len - tokenizer.max_len_single_sentence
     )
-    sequence_pair_added_tokens = 512 - 509
+    sequence_pair_added_tokens = tokenizer.max_seq_len - tokenizer.max_len_sentences_pair
 
     span_doc_tokens = all_doc_tokens
     while len(spans) * doc_stride < len(all_doc_tokens):
@@ -406,7 +411,6 @@ def squad_convert_examples_to_features(
 
         if not is_training:
             all_feature_index = paddle.arange(all_input_ids.shape[0], dtype=paddle.int64)
-            print(all_feature_index)
             dataset = TensorDataset(
                 [all_input_ids, all_attention_masks, all_token_type_ids, all_feature_index, all_cls_index, all_p_mask]
             )
