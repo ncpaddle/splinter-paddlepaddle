@@ -85,6 +85,7 @@ class ModelWithQASSHead(BertPreTrainedModel):
         self.bert = BertModel(config)
         self.initialize_new_qass = initialize_new_qass
         self.cls = ClassificationHead() if not self.initialize_new_qass else None
+        self.new_cls = ClassificationHead() if self.initialize_new_qass else None
 
         self.replace_mask_with_question_token = replace_mask_with_question_token
         self.mask_id = mask_id

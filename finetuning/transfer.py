@@ -2,14 +2,18 @@ import paddle
 import torch
 import numpy as np
 
-torch_model_path = "../splinter/init_params_t.bin"
+torch_model_path = "../init_splinter/pytorch_model.bin"
 torch_state_dict = torch.load(torch_model_path)
 
-paddle_model_path = "../splinter/init_params_p.pdparams"
+paddle_model_path = "../init_splinter/model_state.pdparams"
 paddle_state_dict = {}
+
+
 
 # State_dict's keys mapping: from torch to paddle
 keys_dict = {
+    'new_cls': 'cls',
+
     # about embeddings
     "embeddings.LayerNorm.weight": "embeddings.layer_norm.weight",
     "embeddings.LayerNorm.bias": "embeddings.layer_norm.bias",
@@ -30,6 +34,7 @@ keys_dict = {
     'cls.predictions.decoder.weight': 'cls.predictions.decoder_weight',
     'cls.predictions.transform.LayerNorm': 'cls.predictions.layer_norm',
     'cls.predictions.bias': 'cls.predictions.decoder_bias',
+
 }
 
 for torch_key in torch_state_dict:

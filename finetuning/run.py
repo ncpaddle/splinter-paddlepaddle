@@ -734,8 +734,8 @@ def main():
 
     args.n_gpu = 1
     # args.device = torch.device("cuda:1")
-    args.device = "gpu:0"
-    # args.device = 'cpu'
+    # args.device = "gpu:0"
+    args.device = 'cpu'
     paddle.set_device(args.device)
 
     with open(os.path.join(args.output_dir, 'args.pkl'), 'wb') as f:

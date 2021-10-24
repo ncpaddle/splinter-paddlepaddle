@@ -96,7 +96,7 @@ def train(args, train_dataset, model, tokenizer):
         args.num_train_epochs = args.min_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
 
     print(t_total)  # 200
-    print(args.num_train_epochs)  # 17
+    print(args.num_train_epochs)  # 41
     print(args.max_steps)  # -1
     print(args.min_steps)  # 200
 
