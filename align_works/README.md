@@ -1,48 +1,27 @@
 # 对齐工作说明
 
-## 模型结构对齐
+## 1. 模型结构对齐
 
-——见`模型组网验证`文件夹
-
-### 权重转换
-
-作者pytorch模型所有参数都保存在`pytorch_model.bin`文件中，读取该文件，将模型结构与paddle的模型结构名称一一对应，转换权重。
-
-| 模型参数精度 |
-| ------------ |
-| 0.0          |
-
-### 模型组网正确性验证
-
-将`fake_data`送入pytorch模型和paddle模型，整体模型的中间输出（即预训练模型输出）精度为e-07级，但最终输出精度为e-03级，经二分查找，定位在`nn.Linear`，经该线性层处理后精度下降。该线性层使用多次，导致最终精度为e-03级。
-
-```
-sequence_output = outputs[0]  # [batch_size, max_length, dim]
-# sequence_output精度e-07
-cls = self.get_cls()
-start_logits, end_logits = cls(sequence_output, masked_positions)
-return start_logits, end_logits
-		这两个精度e-03
-		
-
-		
-```
-
-
-
-***精度骤降***：
-
-环境：个人电脑paddlepaddle-2.1.3-cpu
-
-`QuestionAwareSpanSelectionHead`类中，forward时`start_logits = paddle.matmul(temp, start_reps)`，`paddle.matmul`**操作导致精度骤降，输入temp和start_reps精度都是e-07，输出matmul之后精度变为e-03**
-
-将`fake_data`更换，整体模型精度仍为e-03
+——见`1模型组网验证`文件夹
 
 | 预训练模型精度        | 整体模型精度           |
 | --------------------- | ---------------------- |
 | 3.267558383868163e-07 | 1.0885132942348719e-03 |
 
-## 验证/测试集数据读取对齐
+> 说明：经二分排查，整体模型精度不够的原因在**paddle.matmul()**，输入的两个矩阵精度都在e-07次方，输出后精度骤降为e-03次方。
+>
+> ```
+> temp = paddle.matmul(query_start_reps, self.start_classifier)  # diff: 3.69778e-07
+> start_reps = paddle.transpose(start_reps, perm=[0, 2, 1]) # diff: 2.612227660847566e-07
+> start_logits = paddle.matmul(temp, start_reps) # diff: 0.0012255377369001508
+> 
+> temp = paddle.matmul(query_end_reps, self.end_classifier) # diff: 3.106023598320462e-07
+> end_reps = paddle.transpose(end_reps, perm=[0, 2, 1]) # diff: 2.669026457624568e-07
+> end_logits = paddle.matmul(temp, end_reps) # diff: 0.0008031659526750445
+> ```
+>
+
+## 2. 验证/测试集数据读取对齐
 
 ```
 [2021/10/22 22:36:47] root INFO: input_ids_list: 
@@ -68,7 +47,7 @@ return start_logits, end_logits
 [2021/10/22 22:36:47] root INFO: diff check passed
 ```
 
-## 评估指标对齐
+## 3. 评估指标对齐
 
 ```
 [2021/10/23 20:55:33] root INFO: exact: 
@@ -94,63 +73,50 @@ return start_logits, end_logits
 [2021/10/23 20:55:33] root INFO: diff check passed
 ```
 
-## 损失函数对齐
+## 4. 损失函数对齐
 
-### Fake_data
+我们分别使用fake_data和从模型输出得到的输出数据验证损失函数精度。
 
-构造`fake_data`分别送入两个损失函数，计算精度。
-
-### 真实数据
-
-将模型的输出送入两个损失函数，计算精度。由于在模型对齐部分精度只有e-03，即送入两个损失函数的数据精度是e-03，所以导致损失函数对齐精度较`fake_data`低。
-
-| Fake_data            | 真实数据              |
+| Fake_data            | 模型输出数据          |
 | -------------------- | --------------------- |
 | 4.76837158203125e-07 | 4.100799560546875e-05 |
 
-## 学习率对齐
+> 由于在前向模型结构对齐中paddle.matmul()算子的影响，导致精度不高，进而影响到了该处（模型输出数据送入损失函数）的精度。
+
+## 5. 优化器对齐
+
+见8. 反向对齐
+
+## 6. 学习率对齐
 
 | 学习率对齐精度 |
 | -------------- |
 | 0.0            |
 
+## 7. 正则化策略对齐
 
+见8. 反向对齐
 
-## 优化器/正则化策略/反向对齐
+## 8. 反向对齐
 
-...
+| 反向对齐精度（20轮loss） |
+| ------------------------ |
+| 2.003300189971924e-03    |
 
-## 训练集数据读取对齐
+> 和损失对齐一样，受前向模型结构对齐的影响，精度为e-03次方。
+
+## 9. 训练集数据读取对齐
 
 | 训练集数据对齐精度 |
 | ------------------ |
 | 0.0                |
 
+## 10. 网络初始化对齐
 
+> *对于不同的深度学习框架，网络初始化在大多情况下，即使值的分布完全一致，也无法保证值完全一致，这里也是论文复现中不确定性比较大的地方。如果十分怀疑初始化导致的问题，建议将参考的初始化权重转成paddle模型，加载该初始化模型训练，看下收敛精度。*
+>
+> 因此我们按照此标准，对模型进行了训练，最终能达到论文的效果，所以是收敛的。
 
+## 11. 模型训练对齐
 
-
-## 网络初始化对齐
-
-。。。
-
-
-
-## 模型训练对齐
-
-
-
-
-
-## Question
-
-1. `paddlenlp.data`中的`Vocab`类的`__init__`中，`collections.defaultdict()`中用到了local的匿名函数，而在多线程`with Pool()`中，用`p.imap()`处理数据时，会报错
-
-```
-Pool AttributeError: Can't pickle local object 'Vocab.__init__.<locals>.<lambda>......
-```
-
-2. BertTokenizer在encode的时候法把`[MASK]`识别成了`[,  MA,  ##S,  ##K,  ]`五个字符。
-
-
-
+见主页实验结果
