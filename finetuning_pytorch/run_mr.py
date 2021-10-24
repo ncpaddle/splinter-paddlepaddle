@@ -95,6 +95,10 @@ def train(args, train_dataset, model, tokenizer):
         t_total = args.min_steps
         args.num_train_epochs = args.min_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
 
+    print(t_total)  # 200
+    print(args.num_train_epochs)  # 17
+    print(args.max_steps)  # -1
+    print(args.min_steps)  # 200
 
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ["bias", "LayerNorm.weight"]
@@ -188,7 +192,6 @@ def train(args, train_dataset, model, tokenizer):
                 steps_trained_in_current_epoch -= 1
                 continue
 
-
             model.train()
             batch = tuple(t.to(args.device) for t in batch)
 
@@ -200,11 +203,7 @@ def train(args, train_dataset, model, tokenizer):
                 "end_positions": batch[4],
             }
 
-            # inputs = {k: v.detach().numpy() for (k, v) in inputs.items()}
-            # import pickle
-            # pickle.dump(inputs, open('../../splinter-paddle/align/input_data_torch.bin', 'wb'))
-            # assert 1 == 2
-
+            print(batch[0][2])
             outputs = model(**inputs)
             # model outputs are always tuple in transformers (see doc)
             loss = outputs[0]
@@ -1068,5 +1067,5 @@ def get_test_metric():
 
 
 if __name__ == "__main__":
-    # main()
-    get_test_metric()
+    main()
+    # get_test_metric()

@@ -14,7 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Finetuning the library models for question-answering on SQuAD (DistilBERT, Bert, XLM, XLNet)."""
-
+import sys
+sys.path.append('/mnt/sda/zhouchangzhi/splinter-paddle')
 import argparse
 import glob
 import json
@@ -31,7 +32,6 @@ import paddle
 from paddle.io import DataLoader
 from paddle.optimizer import AdamW
 from finetuning.squad import squad_convert_examples_to_features
-
 from paddlenlp.transformers import LinearDecayWithWarmup
 
 from finetuning.squad_metrics import (
@@ -47,7 +47,8 @@ from finetuning.mrqa_processor import MRQAProcessor
 
 logger = logging.getLogger(__name__)
 MODEL_TYPES = ('distilbert', 'albert', 'roberta', 'bert', 'xlnet', 'flaubert', 'xlm')
-WEIGHTS_NAME = "pytorch_model.bin"
+WEIGHTS_NAME = "model_state.pdparams"
+
 def set_seed(args):
     random.seed(args.seed)
     np.random.seed(args.seed)
@@ -63,10 +64,11 @@ def train(args, train_dataset, model, tokenizer):
     """ Train the model """
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
-    train_sampler = paddle.io.RandomSampler(train_dataset) #if args.local_rank == -1 else DistributedSampler(train_dataset)
-    train_batch_sampler = paddle.io.BatchSampler(sampler=train_sampler, batch_size=args.train_batch_size)
-    train_dataloader = DataLoader(train_dataset, batch_sampler=train_batch_sampler)
-    # train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size)
+    # train_sampler = paddle.io.RandomSampler(train_dataset) #if args.local_rank == -1 else DistributedSampler(train_dataset)
+    # train_batch_sampler = paddle.io.BatchSampler(sampler=train_sampler, batch_size=args.train_batch_size)
+    # train_dataloader = DataLoader(train_dataset, batch_sampler=train_batch_sampler)
+    train_dataloader = DataLoader(train_dataset, batch_size=args.train_batch_size)
+
 
     if args.max_steps > 0:
         t_total = args.max_steps
@@ -78,17 +80,19 @@ def train(args, train_dataset, model, tokenizer):
         t_total = args.min_steps
         args.num_train_epochs = args.min_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
 
-    # print(t_total)  # 200
-    # print(args.num_train_epochs)  # 17
-    # print(args.max_steps) # -1
-    # print(args.min_steps)  # 200
+    print(t_total)  # 200
+    print(args.num_train_epochs)  # 17
+    print(args.max_steps) # -1
+    print(args.min_steps)  # 200
 
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
         p.name for n, p in model.named_parameters() if not any (nd in n for nd in ['bias', 'LayerNorm.weight'])
     ]
-    clip = paddle.nn.ClipGradByNorm(clip_norm=args.max_grad_norm)
+
+    # clip = paddle.nn.ClipGradByNorm(clip_norm=args.max_grad_norm)
+    clip = paddle.nn.ClipGradByGlobalNorm(clip_norm=args.max_grad_norm)
 
     scheduler = LinearDecayWithWarmup(learning_rate=args.learning_rate, warmup=int(args.warmup_ratio * t_total),
                                       total_steps=t_total)
@@ -159,6 +163,8 @@ def train(args, train_dataset, model, tokenizer):
                 "end_positions": batch[4],
             }
 
+            print(batch[0][2])
+
             outputs = model(**inputs)
 
             loss = outputs[0]
@@ -171,6 +177,7 @@ def train(args, train_dataset, model, tokenizer):
             tr_loss += loss.item()
             if (step + 1) % args.gradient_accumulation_steps == 0:
                 optimizer.step()
+                scheduler.step()
                 optimizer.clear_grad()
                 global_step += 1
 
@@ -727,8 +734,8 @@ def main():
 
     args.n_gpu = 1
     # args.device = torch.device("cuda:1")
-    # args.device = "gpu:1"
-    args.device = 'cpu'
+    args.device = "gpu:0"
+    # args.device = 'cpu'
     paddle.set_device(args.device)
 
     with open(os.path.join(args.output_dir, 'args.pkl'), 'wb') as f:
@@ -747,7 +754,7 @@ def main():
         args.local_rank,
         args.device,
         args.n_gpu,
-        bool(True),
+        bool(False),
         # args.fp16,
     )
 
@@ -937,6 +944,6 @@ def get_test_metric():
 
 
 if __name__ == "__main__":
-    # main()
-    get_test_metric()
+    main()
+    # get_test_metric()
 

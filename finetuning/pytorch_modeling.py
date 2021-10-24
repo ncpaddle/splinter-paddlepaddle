@@ -6,7 +6,7 @@ from torch.nn.parameter import Parameter
 from transformers import BertPreTrainedModel, BertModel, RobertaModel, BertConfig
 
 
-config = BertConfig.from_pretrained('../splinter')
+config = BertConfig.from_pretrained('../../splinter')
 
 
 

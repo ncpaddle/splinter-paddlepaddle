@@ -1,7 +1,6 @@
-import json
 
 from finetuning.modeling import ModelWithQASSHead, ClassificationHead
-from finetuning.pytorch_modeling import ModelWithQASSHead as PyTorchModelWithQASSHead
+from finetuning_pytorch.modeling import ModelWithQASSHead as PyTorchModelWithQASSHead
 import numpy as np
 import torch
 import pickle
@@ -11,7 +10,7 @@ from reprod_log import ReprodLogger, ReprodDiffHelper
 
 
 # 输入fake_data，得到预测时的数据    在pytorch源代码中生成
-inputs = pickle.load(open('model_input.bin', 'rb'))
+inputs = pickle.load(open('model_input_large.bin', 'rb'))
 del inputs['start_positions']
 del inputs['end_positions']
 
@@ -21,7 +20,7 @@ torch_inputs = {k: torch.tensor(v) for (k, v) in inputs.items()}
 
 
 # 加载paddle和torch的模型，得到evaluate的输出
-# 改模型代码，在预训练模型之后接着return，以得到预训练模型的输出
+# 改模型代码，在outputs=self.bert()之后接着return，以得到预训练模型的输出
 model_paddle = ModelWithQASSHead.from_pretrained('../../splinter')
 model_paddle.eval()
 out_paddle = model_paddle(**paddle_inputs)

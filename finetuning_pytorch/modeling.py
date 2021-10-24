@@ -6,7 +6,7 @@ from torch.nn.parameter import Parameter
 from transformers import BertPreTrainedModel, BertModel, RobertaModel, BertConfig
 
 
-config = BertConfig.from_pretrained('../splinter')
+# config = BertConfig.from_pretrained('../../splinter')
 
 
 
@@ -58,10 +58,11 @@ class QuestionAwareSpanSelectionHead(Module):
         start_reps = self.start_transform(inputs)  # [batch_size, seq_length, dim]
         end_reps = self.end_transform(inputs)  # [batch_size, seq_length, dim]
 
-        temp = torch.matmul(query_start_reps, self.start_classifier)  # [batch_size, num_positions, dim]# 0.0003
+        temp = torch.matmul(query_start_reps, self.start_classifier)
         start_reps = start_reps.permute(0, 2, 1)  # [batch_size, dim, seq_length] # 0.0002
         start_logits = torch.matmul(temp, start_reps)  #0.21...
         temp = torch.matmul(query_end_reps, self.end_classifier)
+
         end_reps = end_reps.permute(0, 2, 1)
         end_logits = torch.matmul(temp, end_reps)
 
@@ -138,7 +139,9 @@ class ModelWithQASSHead(BertPreTrainedModel):
             end_loss = loss_fct(end_logits, end_positions.long())
 
             total_loss = (start_loss + end_loss) / 2
-
+            print('total_loss', total_loss)
+            print('start_loss', start_loss)
+            print('end_loss', end_loss)
             outputs = (total_loss,) + outputs
 
         return outputs

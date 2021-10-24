@@ -48,7 +48,6 @@ class ModelWithQASSHead(BertPretrainedModel):
         self.sep_id = sep_id
         self.mask_id = mask_id
         self.question_token_id = question_token_id
-
         self.replace_mask_with_question_token = replace_mask_with_question_token
 
 
@@ -99,10 +98,13 @@ class ModelWithQASSHead(BertPretrainedModel):
             end_positions = paddle.clip(end_positions, 0, ignored_index)
 
             loss_fct = nn.CrossEntropyLoss(ignore_index=ignored_index)
-            start_loss = loss_fct(start_logits, paddle.to_tensor(start_positions, dtype=paddle.int64))
-            end_loss = loss_fct(end_logits, paddle.to_tensor(end_positions, dtype=paddle.int64))
+            start_loss = loss_fct(start_logits, start_positions)
+            end_loss = loss_fct(end_logits, end_positions)
 
             total_loss = (start_loss + end_loss) / 2
+            print('total_loss', total_loss)
+            print('start_loss', start_loss)
+            print('end_loss', end_loss)
             outputs = (total_loss,) + outputs
 
         return outputs
@@ -137,19 +139,19 @@ class QuestionAwareSpanSelectionHead(nn.Layer):
 
     def forward(self, inputs, positions):
         # return inputs # diff: 5.722e-06
-        gathered_reps = gather_positions(inputs, positions)  # diff: 4.76e-06
-        query_start_reps = self.query_start_transform(gathered_reps)  # [batch_size, num_positions, dim] # diff: 1.335e-05
-        query_end_reps = self.query_end_transform(gathered_reps)  # [batch_size, num_positions, dim] # diff: 1.66893e-05
-        start_reps = self.start_transform(inputs)  # [batch_size, seq_length, dim] # diff: 0.00064
-        end_reps = self.end_transform(inputs)  # [batch_size, seq_length, dim] # diff: 0.00025177
+        gathered_reps = gather_positions(inputs, positions)  # diff: 3e-07
+        query_start_reps = self.query_start_transform(gathered_reps)  # diff: 1.34e-07
+        query_end_reps = self.query_end_transform(gathered_reps)
+        start_reps = self.start_transform(inputs)  # diff: 2.61e-07
+        end_reps = self.end_transform(inputs)
 
-        temp = paddle.matmul(query_start_reps, self.start_classifier)  # [batch_size, num_positions, dim] #diff: 0.00035
-        start_reps = paddle.transpose(start_reps, perm=[0, 2, 1])
-        start_logits = paddle.matmul(temp, start_reps)
-        temp = paddle.matmul(query_end_reps, self.end_classifier)
-        # end_reps = end_reps.permute(0, 2, 1)
-        end_reps = paddle.transpose(end_reps, perm=[0, 2, 1])
-        end_logits = paddle.matmul(temp, end_reps)
+        temp = paddle.matmul(query_start_reps, self.start_classifier)  # diff: 3.69778e-07
+        start_reps = paddle.transpose(start_reps, perm=[0, 2, 1]) # diff: 2.612227660847566e-07
+        start_logits = paddle.matmul(temp, start_reps) # diff: 0.0012255377369001508
+
+        temp = paddle.matmul(query_end_reps, self.end_classifier) # diff: 3.106023598320462e-07
+        end_reps = paddle.transpose(end_reps, perm=[0, 2, 1]) # diff: 2.669026457624568e-07
+        end_logits = paddle.matmul(temp, end_reps) # diff: 0.0008031659526750445
 
         return start_logits, end_logits
 

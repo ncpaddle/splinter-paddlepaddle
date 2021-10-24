@@ -1,7 +1,9 @@
+import sys
+sys.path.append('/mnt/sda/zhouchangzhi/splinter-paddle')
 import json
 
 from finetuning.modeling import ModelWithQASSHead, ClassificationHead
-from finetuning.pytorch_modeling import ModelWithQASSHead as PyTorchModelWithQASSHead
+from finetuning_pytorch.modeling import ModelWithQASSHead as PyTorchModelWithQASSHead
 import numpy as np
 import torch
 import pickle
@@ -36,6 +38,8 @@ out_torch = model_torch(**torch_inputs)
 
 paddle_np = np.array([out_paddle[0].numpy(), out_paddle[1].numpy()])
 torch_np = np.array([out_torch[0].detach().numpy(), out_torch[1].detach().numpy()])
+# paddle_np = np.array([out_paddle.numpy()])
+# torch_np = np.array([out_torch.detach().numpy()])
 
 # 加载ReprodLogger
 rl_torch = ReprodLogger()

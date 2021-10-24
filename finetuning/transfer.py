@@ -2,10 +2,10 @@ import paddle
 import torch
 import numpy as np
 
-torch_model_path = "../splinter/pytorch_model.bin"
+torch_model_path = "../splinter/init_params_t.bin"
 torch_state_dict = torch.load(torch_model_path)
 
-paddle_model_path = "../splinter/model_state.pdparams"
+paddle_model_path = "../splinter/init_params_p.pdparams"
 paddle_state_dict = {}
 
 # State_dict's keys mapping: from torch to paddle
