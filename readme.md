@@ -40,5 +40,13 @@ More details about **align works** in [readme.md](https://github.com/ncpaddle/sp
 
 ## Some Problems and Suggestions
 
+1. paddle.matmul()问题；
+2. batch_size=1  nan问题；
+3. modal.eval()后不能loss.backward()；
+4. fake_data在nlp中很难构造；
+5. [MASK]问题；
+6. KaiMing初始化；
+7. paddlenlp.transformers.BertModel中attention_mask;
 
+More details about **some problems and suggestions** in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/question.md) .
 
