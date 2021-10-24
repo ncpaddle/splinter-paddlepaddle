@@ -34,7 +34,7 @@ This repoitory contains a **Paddle** implementation of the Splinter.
 
 ## Align works
 
-
+[README.md about align works](https://github.com/ncpaddle/splinter-paddlepaddle/tree/main/align_works)
 
 
 
