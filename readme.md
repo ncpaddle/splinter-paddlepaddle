@@ -1,15 +1,14 @@
 # Few-Shot Question Answering by Pretraining Span Selection - Paddle Version
 
-This repoitory contains a **Paddle** implementation of the Splinter.
-
-- Original Paper: https://arxiv.org/pdf/2101.00438v2.pdf
-- Original Pytorch Implementation: [oriram/splinter (github.com)](https://github.com/oriram/splinter)
-
-Run our codes (BaiDu ai studio): https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1
+> This repoitory contains a **Paddle** implementation of the Splinter.
+>
+> - Original Paper: https://arxiv.org/pdf/2101.00438v2.pdf
+> - Original Pytorch Implementation: [oriram/splinter (github.com)](https://github.com/oriram/splinter)
+> - Run our codes (BaiDu ai studio): https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1
 
 ## Introduction
 
-`align_works`: Our all align works about paddlepaddle implementation.  [论文复现指南](https://github.com/PaddlePaddle/models/blob/develop/docs/ThesisReproduction_CV.md#4)
+`align_works`: Our all align works about paddlepaddle implementation.
 
 `finetuning`: paddlepaddle version of Splinter.
 
@@ -17,7 +16,7 @@ Run our codes (BaiDu ai studio): https://aistudio.baidu.com/aistudio/projectdeta
 
 `init_splinter/splinter`: model parameters and configs files.
 
-`mrqa-few-shot`: SQuaD dataset
+`mrqa-few-shot`: SQuAD dataset
 
 ## Experiment Results
 
@@ -28,7 +27,7 @@ Run our codes (BaiDu ai studio): https://aistudio.baidu.com/aistudio/projectdeta
 
 
 
-## align works
+## Align Works
 
 - `forward_diff`: [model_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/1模型组网验证/log_diff/model_diff.txt)
 
