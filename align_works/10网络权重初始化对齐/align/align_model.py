@@ -12,6 +12,22 @@ import random
 from reprod_log import ReprodLogger, ReprodDiffHelper
 
 
+
+
+
+lt = torch.nn.Linear(20, 3)
+lp = paddle.nn.Linear(3 ,20, weight_attr=paddle.nn.initializer.KaimingUniform())
+
+
+for p in lt.parameters():
+    print(p)
+
+
+print(lp.parameters())
+assert 1 == 2
+
+
+
 random.seed(42)
 np.random.seed(42)
 paddle.seed(42)
