@@ -3,7 +3,6 @@
 >1. paddle.matmul()问题；
 >2. batch_size=1  nan问题；
 >3. modal.eval()后不能loss.backward()；
->4. fake_data在nlp中很难构造；
 >5. [MASK]问题；
 >6. KaiMing初始化；
 >7. paddlenlp.transformers.BertModel中attention_mask;
@@ -11,7 +10,6 @@
 1. 前向对齐时所提到的`paddle.matmul()`导致**精度骤降**问题，看了以前一些论文复现同学提的issues，这个问题不止一次出现过，是paddle的matmul算子实现与pytorch不一样导致的。还有就是`paddle.matmul()`的输入值很大可能也会加重精度降低问题，在我们复现的splinter模型中，值就很大。
 2. batch_size=1或送入网络中的数据是一个时，训练会出问题，模型权重变为nan，这个问题在cpu上运行不会出现，只会在gpu上出现，我们已经提交issue，issue地址为：[[飞桨复现论文\]batch=1时出现nan · Issue #36665 · PaddlePaddle/Paddle (github.com)](https://github.com/PaddlePaddle/Paddle/issues/36665)
 3. **modal.eval()后不能回传loss**，也就是不能loss.backward()，导致大家在反向精度对齐时很难处理，因为model.train()会引入很多随机的东西，尤其是对于我们所复现的预训练语言模型+微调范式的论文来说，transformers里面的12层dropout是灾难。不过我们把预训练模型加载的config.json中的dropout率都改为了0，解决了随机的问题。
-4. 论文复现指南上所说的**fake_data**，在nlp中很难构造，甚至在我们所复现的论文中，根本无法构造。因此我们的fake_data是抽出了几个batch的数据。
 5. **paddlenlp.BertTokenizer**好像没有办法处理`[MASK]`, 下面是`BertTokenizer.__init__`中的三行代码，`self.basic_tokenizer`会把`[MASK]`切成`[`,`MASK`,`]`三部分，`self.wordpiece_tokenizer`会进一步切成`[`,`MA`, `##S`, `##K`,`]`五部分，即使`self.vocab`中有`[MASK]`.
 
 ```
@@ -42,3 +40,5 @@ vocab=self.vocab, unk_token=unk_token)
    ```
 
    经过自己测试发现，输入的attention_mask维度为`[batch_size, 1, 1, sequence_length]`，没有问题。
+   
+8. 论文复现指南上所说的**fake_data**，在nlp中很难构造。因此我们的fake_data是抽出了几个batch的数据。

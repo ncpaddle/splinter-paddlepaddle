@@ -1,0 +1,21 @@
+[2021/10/26 00:11:25] root INFO: input_ids_list: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: attention_mask_list: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: token_type_ids_list: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: start_pos_list: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: end_pos_list: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: input_ids_list2: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: attention_mask_list2: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: token_type_ids_list2: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: start_pos_list2: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: end_pos_list2: 
+[2021/10/26 00:11:25] root INFO: 	mean diff: check passed: True, value: 0.0
+[2021/10/26 00:11:25] root INFO: diff check passed

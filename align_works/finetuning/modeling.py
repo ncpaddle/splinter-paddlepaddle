@@ -79,7 +79,6 @@ class ModelWithQASSHead(BertPretrainedModel):
         attention_mask_expand = paddle.unsqueeze(attention_mask, axis=[1, 2])
         outputs = self.bert(input_ids=input_ids, attention_mask=attention_mask_expand, token_type_ids=token_type_ids)
         sequence_output = outputs[0]  # [batch_size, max_length, dim]
-        return sequence_output  # 1check_forward中align_pretrainedModel.py中使用
 
         cls = self.get_cls()
         start_logits, end_logits = cls(sequence_output, masked_positions)
@@ -117,7 +116,7 @@ class FullyConnectedLayer(nn.Layer):
         self.input_dim = input_dim
         self.output_dim = output_dim
         self.dense = nn.Linear(in_features=self.input_dim, out_features=self.output_dim,
-                               weight_attr=nn.initializer.KaimingUniform(), bias_attr=nn.initializer.KaimingUniform())
+                               weight_attr=nn.initializer.KaimingUniform(), bias_attr=True)
         self.act_fn = nn.GELU()
         self.LayerNorm = nn.LayerNorm(self.output_dim)
 

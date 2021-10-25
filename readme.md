@@ -20,10 +20,23 @@
 
 ## Experiment Results
 
-|                | 16 examples F1    | 128 examples F1   | 1024 examples F1  |
-| -------------- | ----------------- | ----------------- | ----------------- |
-| Ours           | 55.45750403014726 | 71.75794050534279 | 82.44176964790394 |
-| Original Paper | 54.6              | 72.7              | 82.8              |
+|                | 16 examples F1 | 128 examples F1 | 1024 examples F1 |
+| -------------- | -------------- | --------------- | ---------------- |
+| Ours           | **56.5**       | **72.7**        | **83.1**         |
+| Original Paper | 54.6           | 72.7            | 82.8             |
+
+
+
+| train file seed selection | 16 examples F1 | 128 examples F1 | 1024 examples F1 |
+| ------------------------- | -------------- | --------------- | ---------------- |
+| 42                        | 51.26509539    | 71.00971741     | 82.26968572      |
+| 43                        | 56.73208173    | 72.63511586     | 83.65651393      |
+| 44                        | 61.64881717    | 73.67941026     | 83.10696752      |
+| 45                        | 52.87432194    | 73.40425954     | 83.32543886      |
+| 46                        | 60.14548496    | 73.16006015     | 83.27331091      |
+| Avg                       | 56.53316024    | 72.77771264     | 83.12638339      |
+
+
 
 ## How to run
 
@@ -44,15 +57,14 @@ edition: splinter-paddle-1024
 
 More details about **align works** in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/tree/main/align_works#%E5%AF%B9%E9%BD%90%E5%B7%A5%E4%BD%9C%E8%AF%B4%E6%98%8E) .
 
-## Some Problems and Suggestions
+## Some Problems and Suggestion
 
-1. paddle.matmul()问题；
-2. batch_size=1  nan问题；
+1. paddle.matmul()；
+2. batch_size=1  nan问题；（已提交issue）
 3. modal.eval()后不能loss.backward()；
-4. fake_data在nlp中很难构造；
 5. [MASK]问题；
 6. KaiMing初始化；
-7. paddlenlp.transformers.BertModel中attention_mask;
+7. paddlenlp.transformers.BertModel中attention_mask;（已提交issue）
 
-More details about **some problems and suggestions** in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/question.md) .
+More details about **some problems and suggestion** in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/question.md) .
 

@@ -12,6 +12,8 @@ paddle_state_dict = {}
 
 # State_dict's keys mapping: from torch to paddle
 keys_dict = {
+    'new_cls': 'cls',
+
     # about embeddings
     "embeddings.LayerNorm.weight": "embeddings.layer_norm.weight",
     "embeddings.LayerNorm.bias": "embeddings.layer_norm.bias",

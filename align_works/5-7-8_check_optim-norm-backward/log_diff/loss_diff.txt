@@ -1,0 +1,3 @@
+[2021/10/26 00:43:27] root INFO: backward_loss: 
+[2021/10/26 00:43:27] root INFO: 	mean diff: check passed: False, value: 0.0030797004699707033
+[2021/10/26 00:43:27] root INFO: diff check failed
