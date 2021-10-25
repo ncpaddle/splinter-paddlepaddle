@@ -24,6 +24,20 @@
             </Attribute>
           </value>
         </entry>
+        <entry key="\finetuning\run.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\paddlenlp\transformers\tokenizer_utils.py">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
       </map>
     </option>
   </component>

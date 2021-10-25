@@ -1,8 +1,8 @@
 python run.py \
 --model_type=bert \
---model_name_or_path="../splinter_init" \
+--model_name_or_path="../splinter" \
 --qass_head=True \
---tokenizer_name="../splinter_init" \
+--tokenizer_name="../splinter" \
 --output_dir="output" \
 --train_file="../mrqa-few-shot/squad/squad-train-seed-42-num-examples-16_qass.jsonl" \
 --predict_file="../mrqa-few-shot/squad/dev_qass.jsonl" \

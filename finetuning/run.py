@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Finetuning the library models for question-answering on SQuAD (DistilBERT, Bert, XLM, XLNet)."""
-import sys
-sys.path.append('/mnt/sda/zhouchangzhi/splinter-paddle')
 import argparse
 import glob
 import json
@@ -80,11 +78,6 @@ def train(args, train_dataset, model, tokenizer):
         t_total = args.min_steps
         args.num_train_epochs = args.min_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
 
-    print(t_total)  # 200
-    print(args.num_train_epochs)  # 17
-    print(args.max_steps) # -1
-    print(args.min_steps)  # 200
-
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
@@ -105,10 +98,6 @@ def train(args, train_dataset, model, tokenizer):
         epsilon=args.adam_epsilon,
         grad_clip=clip,
         weight_decay=args.weight_decay)
-
-
-
-    # Check if saved optimizer or scheduler states exist
 
     # Train!
     logger.info("***** Running training *****")
@@ -139,7 +128,6 @@ def train(args, train_dataset, model, tokenizer):
 
     best_results = {"exact": 0, "f1": 0, "global_step": 0}
 
-
     for _ in train_iterator:
         epoch_iterator = tqdm(train_dataloader, desc="Iteration")
         for step, batch in enumerate(epoch_iterator):
@@ -162,8 +150,6 @@ def train(args, train_dataset, model, tokenizer):
                 "start_positions": batch[3],
                 "end_positions": batch[4],
             }
-
-            print(batch[0][2])
 
             outputs = model(**inputs)
 
@@ -856,94 +842,7 @@ def main():
     return results
 
 
-def get_test_data():
-    from reprod_log import ReprodLogger, ReprodDiffHelper
-    rl = ReprodLogger()
-
-    args = getParser().parse_args()
-    tokenizer = BertTokenizer.from_pretrained(
-        args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
-    )
-    if args.qass_head:
-        model = ModelWithQASSHead.from_pretrained(args.model_name_or_path,
-                                                  replace_mask_with_question_token=True,
-                                                  mask_id=103, question_token_id=104,
-                                                  initialize_new_qass=args.initialize_new_qass, )
-    model.eval()
-    dataset, examples, features = load_and_cache_examples(args, tokenizer, evaluate=True, output_examples=True,
-                                                          use_cache=args.use_cache)
-    args.n_gpu = 1
-    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-    eval_dataloader = DataLoader(dataset, batch_size=args.eval_batch_size)
-
-    np.random.seed(42)
-    rand_nums = []
-    for i in range(5):
-        rand_nums.append(np.random.randint(0, len(dataset)))
-    # print(rand_nums) # [7270, 860, 5390, 5191, 5734]
-
-    # dataset: TensorDataset
-    input_ids_list = []
-    attention_mask_list = []
-    token_type_ids_list = []
-    start_pos_list = []
-    end_pos_list = []
-    for n in rand_nums:
-        input_ids_list.append(dataset[n][0].numpy().tolist())
-        attention_mask_list.append(dataset[n][1].numpy().tolist())
-        token_type_ids_list.append(dataset[n][2].numpy().tolist())
-        start_pos_list.append(dataset[n][3].numpy().tolist())
-        end_pos_list.append(dataset[n][4].numpy().tolist())
-    rl.add('input_ids_list', np.array(input_ids_list))
-    rl.add('attention_mask_list', np.array(attention_mask_list))
-    rl.add('token_type_ids_list', np.array(token_type_ids_list))
-    rl.add('start_pos_list', np.array(start_pos_list))
-    rl.add('end_pos_list', np.array(end_pos_list))
-
-    # eval_dataloader
-    input_ids_list2 = []
-    attention_mask_list2 = []
-    token_type_ids_list2 = []
-    start_pos_list2 = []
-    end_pos_list2 = []
-    for i, data in enumerate(eval_dataloader):
-        if i > 5:
-            break
-        input_ids_list2.append(data[0].numpy().tolist())
-        attention_mask_list2.append(data[1].numpy().tolist())
-        token_type_ids_list2.append(data[2].numpy().tolist())
-        start_pos_list2.append(data[3].numpy().tolist())
-        end_pos_list2.append(data[4].numpy().tolist())
-    rl.add('input_ids_list2', np.array(input_ids_list2))
-    rl.add('attention_mask_list2', np.array(attention_mask_list2))
-    rl.add('token_type_ids_list2', np.array(token_type_ids_list2))
-    rl.add('start_pos_list2', np.array(start_pos_list2))
-    rl.add('end_pos_list2', np.array(end_pos_list2))
-    rl.save('test_data_paddle.npy')
-
-
-
-def get_test_metric():
-    args = getParser().parse_args()
-
-    tokenizer = BertTokenizer.from_pretrained(
-        args.tokenizer_name if args.tokenizer_name else args.model_name_or_path,
-    )
-    if args.qass_head:
-        model = ModelWithQASSHead.from_pretrained(args.model_name_or_path,
-                                                  replace_mask_with_question_token=True,
-                                                  mask_id=103, question_token_id=104,
-                                                  )
-    args.n_gpu = 1
-    args.eval_batch_size = args.per_gpu_eval_batch_size * max(1, args.n_gpu)
-    model.eval()
-    result = evaluate(args, model, tokenizer)
-    print(result)
-    paddle.save(result, 'eval_res_paddle_50.bin')
-
-
 
 if __name__ == "__main__":
     main()
-    # get_test_metric()
 
