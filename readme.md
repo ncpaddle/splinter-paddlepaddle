@@ -38,9 +38,9 @@
 - `finetuning`: finetuning codes of Splinter using paddle framework;
 
 - `mrqa-few-shot/squad`: SQuAD dataset;
-- `paddlenlp`: changed edition by us based on [paddlepaddle/paddlenlp]([PaddlePaddle/PaddleNLP: An NLP library with Awesome pre-trained Transformer models and easy-to-use interface, supporting wide-range of NLP tasks from research to industrial applications. (github.com)](https://github.com/PaddlePaddle/PaddleNLP));
+- `paddlenlp`: changed edition by us based on [paddlepaddle/paddlenlp](https://github.com/PaddlePaddle/PaddleNLP);
 
-- [`reprod_log`]([reprod_log/README.md at master · WenmuZhou/reprod_log (github.com)](https://github.com/WenmuZhou/reprod_log/blob/master/README.md)): a third-party library using checking precision between torch's codes and paddle's codes;
+- [`reprod_log`](https://github.com/WenmuZhou/reprod_log/blob/master/README.md): a third-party library using checking precision between torch's codes and paddle's codes;
 - `splinter_init`: model's params and configs.
 
 
@@ -49,7 +49,7 @@
 
 > You can git clone this repo to run our codes or use BaiDu AI Studio. 
 >
-> We suggest you choose BaiDu AI Studio, our program link is:  https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1. You can run our codes directly. 
+> We suggest you choose BaiDu AI Studio, this is our program [link](https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1). You can run our codes in AI Studio directly. 
 >
 > Here's what you need to pay attention to if you choose git clone this repo.
 
@@ -104,11 +104,11 @@ $ python run.py \
 
 ## 5. Align Works
 
-- `forward_diff`: [model_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/1模型组网验证/log_diff/model_diff.txt)
+- `forward_diff`: [model_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/1_check_forward/log_diff/model_diff.txt)
 
-- `metric_diff`:[metric_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/3评估指标对齐/log_diff/metric_diff.txt)
-- `loss_diff`:[loss_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/4损失验证2/log_diff/loss_diff.txt)
-- `backward_diff`:[backward_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/5_7_8优化器正则化反向对齐/log_diff/loss_diff.txt)
+- `metric_diff`:[metric_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/3_check_metric/log_diff/metric_diff.txt)
+- `loss_diff`:[loss_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/4_check_loss/log_diff/loss_diff.txt)
+- `backward_diff`:[backward_diff.txt]([splinter-paddlepaddle/loss_diff.txt at main · ncpaddle/splinter-paddlepaddle (github.com)](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/5-7-8_check_optim-norm-backward/log_diff/loss_diff.txt))
 - `train_align`: experiment results
 
 More details about **align works** in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/tree/main/align_works#%E5%AF%B9%E9%BD%90%E5%B7%A5%E4%BD%9C%E8%AF%B4%E6%98%8E) .
