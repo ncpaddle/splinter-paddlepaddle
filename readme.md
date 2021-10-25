@@ -25,7 +25,13 @@
 | Ours           | 55.45750403014726 | 71.75794050534279 | 82.44176964790394 |
 | Original Paper | 54.6              | 72.7              | 82.8              |
 
+## How to run
 
+You can find our programs in BaiDu Ai Studio. 
+
+AI Studios url: https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1
+
+edition: splinter-paddle-1024
 
 ## Align Works
 
