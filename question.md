@@ -1,11 +1,21 @@
->
->
->1. paddle.matmul()问题；
->2. batch_size=1  nan问题；
+
+
+
+
+## New Questions  2021/10/26 
+
+1. 完全相同的代码，放到Ai Studio上跑，第一次跑完，接着第二次再跑，两次结果不一样，甚至会差三四个点。因此我们在实验中，如果跑的结果不好，就会再跑几次。尚不知道是哪里的问题，以前在学校跑代码也遇见过在不同机器上结果不一样的情形，就很迷.....
+
+
+
+## Questions that have been reviewed below
+
+>1. paddle.matmul()；
+>2. batch_size=1  nan；（submitted issue: paddle#36665）
 >3. modal.eval()后不能loss.backward()；
->5. [MASK]问题；
->6. KaiMing初始化；
->7. paddlenlp.transformers.BertModel中attention_mask;
+>4. [MASK]；（submitted issue: paddlenlp#1231）
+>5. KaiMingUniform；（submitted issue: paddle#36717）
+>6. paddlenlp.transformers.BertModel中attention_mask;（submitted issue: paddle#1224）
 
 1. 前向对齐时所提到的`paddle.matmul()`导致**精度骤降**问题，看了以前一些论文复现同学提的issues，这个问题不止一次出现过，是paddle的matmul算子实现与pytorch不一样导致的。还有就是`paddle.matmul()`的输入值很大可能也会加重精度降低问题，在我们复现的splinter模型中，值就很大。
 2. batch_size=1或送入网络中的数据是一个时，训练会出问题，模型权重变为nan，这个问题在cpu上运行不会出现，只会在gpu上出现，我们已经提交issue，issue地址为：[[飞桨复现论文\]batch=1时出现nan · Issue #36665 · PaddlePaddle/Paddle (github.com)](https://github.com/PaddlePaddle/Paddle/issues/36665)
