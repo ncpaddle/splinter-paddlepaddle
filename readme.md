@@ -59,7 +59,7 @@
 1. Git clone this repo and download model parameters from  [Google Cloud share](https://drive.google.com/drive/folders/1RT9NvOMpmsfIV-q3jXksImV4aqz-gPQN?usp=sharing)
    1. splinter ---> align_works/splinter
    2. splinter_init ---> splinter_init
-2. Runing our codes in BaiDu AI Studio. Choosing **`Splinter-paddle-X`** edition from this [link](https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1) and runing the problems. 
+2. Runing our codes in BaiDu AI Studio. Choosing **`Splinter-paddle-F`** edition from this [link](https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1) and runing the problems. 
 
 > *We suggest you choose the second option.*
 
