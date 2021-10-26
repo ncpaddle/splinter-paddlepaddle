@@ -38,13 +38,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\output_avg\test.py">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\paddlenlp\transformers\tokenizer_utils.py">
           <value>
             <Attribute>

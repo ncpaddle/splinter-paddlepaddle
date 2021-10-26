@@ -1,0 +1,26 @@
+import pickle
+
+a = pickle.load(open('examples16_average.json', 'rb'))
+b = pickle.load(open('examples128_average.json', 'rb'))
+c = pickle.load(open('examples1024_average.json', 'rb'))
+#
+# a['best_f1'] = 55.620484105310915
+# a['best_f1_thresh'] = 0.0
+# a['exact'] = 43.76701246787856
+#
+# b['best_f1'] = 72.63456920182823
+# b['best_f1_thresh'] = 0.0
+# b['exact'] = 61.83116017892833
+#
+# c['best_f1'] = 82.89359648216431
+# c['best_f1_thresh'] = 0.0
+# c['exact'] = 73.56619396592748
+#
+#
+# pickle.dump(a, open('examples16_average.json', 'wb'))
+# pickle.dump(b, open('examples128_average.json', 'wb'))
+# pickle.dump(c, open('examples1024_average.json', 'wb'))
+
+print(a)
+print(b)
+print(c)

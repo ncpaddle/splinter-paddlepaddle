@@ -14,21 +14,22 @@
 
 ## 2. Experiment Results
 
+- Original paper:
+
 |                | 16 examples F1 | 128 examples F1 | 1024 examples F1 |
 | -------------- | -------------- | --------------- | ---------------- |
-| Ours           | **56.5**       | **72.7**        | **83.1**         |
 | Original Paper | 54.6           | 72.7            | 82.8             |
 
-
+- Ours:
 
 | seed selection of train files | 16 examples F1 | 128 examples F1 | 1024 examples F1 |
 | ----------------------------- | -------------- | --------------- | ---------------- |
-| 42                            | 51.26509539    | 71.00971741     | 82.26968572      |
-| 43                            | 56.73208173    | 72.63511586     | 83.65651393      |
-| 44                            | 61.64881717    | 73.67941026     | 83.10696752      |
-| 45                            | 52.87432194    | 73.40425954     | 83.32543886      |
-| 46                            | 60.14548496    | 73.16006015     | 83.27331091      |
-| Avg                           | 56.53316024    | 72.77771264     | 83.12638339      |
+| 42                            | 54.38          | 71.45           | 82.46            |
+| 43                            | 51.89          | 72.42           | 82.82            |
+| 44                            | 61.68          | 73.81           | 83.22            |
+| 45                            | 45.14          | 72.43           | 83.39            |
+| 46                            | 58.92          | 73.06           | 82.57            |
+| **Average**                   | **55.62**      | **72.63**       | **82.89**        |
 
 
 ## 3. Folders
@@ -53,51 +54,78 @@
 >
 > Here's what you need to pay attention to if you choose git clone this repo.
 
-### 4.1 Download Model
+### 4.1 Run Style
 
-You can get model parameters from this [Google Cloud share](https://drive.google.com/drive/folders/1RT9NvOMpmsfIV-q3jXksImV4aqz-gPQN?usp=sharing). 
+1. Git clone this repo and download model parameters from  [Google Cloud share](https://drive.google.com/drive/folders/1RT9NvOMpmsfIV-q3jXksImV4aqz-gPQN?usp=sharing)
+   1. splinter ---> align_works/splinter
+   2. splinter_init ---> splinter_init
+2. Runing our codes in BaiDu AI Studio. Choosing **`Splinter-paddle-X`** edition from this [link](https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1) and runing the problems. 
 
-- splinter ---> align_works/splinter
-- splinter_init ---> splinter_init
+> *We suggest you choose the second option.*
 
 
 
-### 4.2 Run
+### 4.2 Run Scripts
+
+- We can obtain the average experiment results by the script that can run all of the sampled datasets. 
 
 ```shell
-$ cd finetuning
-$ sh run.sh
+python splinter-paddle/finetuning/run_all.py \
+    --model_type=bert \
+    --model_name_or_path="splinter-paddle/splinter_init" \
+    --qass_head=True \
+    --tokenizer_name="splinter-paddle/splinter_init" \
+    --output_dir="output" \
+    --output_dir_avg="output_avg" \
+    --train_file="" \
+    --predict_file="splinter-paddle/mrqa-few-shot/squad/dev_qass.jsonl" \
+    --do_train \
+    --do_eval \
+    --max_seq_length=384 \
+    --doc_stride=128 \
+    --threads=4 \
+    --save_steps=50000 \
+    --per_gpu_train_batch_size=12 \
+    --per_gpu_eval_batch_size=16 \
+    --learning_rate=3e-5 \
+    --max_answer_length=10 \
+    --warmup_ratio=0.1 \
+    --min_steps=200 \
+    --num_train_epochs=10 \
+    --seed=128 \
+    --use_cache=False \
+    --evaluate_every_epoch=False \
+    --initialize_new_qass=False
 ```
 
-or
+- We can obtain a experiment result of a single sampled dataset by this script. 
 
 ```shell
-$ cd finetuning
-$ python run.py \
---model_type=bert \
---model_name_or_path="../splinter_init" \
---qass_head=True \
---tokenizer_name="../splinter_init" \
---output_dir="output" \
---train_file="../mrqa-few-shot/squad/squad-train-seed-42-num-examples-16_qass.jsonl" \
---predict_file="../mrqa-few-shot/squad/dev_qass.jsonl" \
---do_train \
---do_eval \
---max_seq_length=384 \
---doc_stride=128 \
---threads=1 \
---save_steps=50000 \
---per_gpu_train_batch_size=12 \
---per_gpu_eval_batch_size=16 \
---learning_rate=3e-5 \
---max_answer_length=10 \
---warmup_ratio=0.1 \
---min_steps=200 \
---num_train_epochs=10 \
---seed=42 \
---use_cache=False \
---evaluate_every_epoch=False \
---initialize_new_qass=False
+python splinter-paddle/finetuning/run.py \
+    --model_type=bert \
+    --model_name_or_path="splinter-paddle/splinter_init" \
+    --qass_head=True \
+    --tokenizer_name="splinter-paddle/splinter_init" \
+    --output_dir="output_single" \
+    --train_file="splinter-paddle/mrqa-few-shot/squad/squad-train-seed-42-num-examples-16_qass.jsonl" \
+    --predict_file="splinter-paddle/mrqa-few-shot/squad/dev_qass.jsonl" \
+    --do_train \
+    --do_eval \
+    --max_seq_length=384 \
+    --doc_stride=128 \
+    --threads=1 \
+    --save_steps=50000 \
+    --per_gpu_train_batch_size=12 \
+    --per_gpu_eval_batch_size=16 \
+    --learning_rate=3e-5 \
+    --max_answer_length=10 \
+    --warmup_ratio=0.1 \
+    --min_steps=200 \
+    --num_train_epochs=10 \
+    --seed=128 \
+    --use_cache=False \
+    --evaluate_every_epoch=False \
+    --initialize_new_qass=False
 ```
 
 
@@ -112,8 +140,4 @@ $ python run.py \
 - `train_align`: experiment results
 
 More details about **align works** in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/tree/main/align_works#%E5%AF%B9%E9%BD%90%E5%B7%A5%E4%BD%9C%E8%AF%B4%E6%98%8E) .
-
-## 6. Issues
-
-Issues' details  in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/question.md) .
 

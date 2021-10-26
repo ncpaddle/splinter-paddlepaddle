@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ Finetuning the library models for question-answering on SQuAD (DistilBERT, Bert, XLM, XLNet)."""
-
 import argparse
 import glob
 import json
@@ -51,11 +50,12 @@ WEIGHTS_NAME = "model_state.pdparams"
 def set_seed(args):
     random.seed(args.seed)
     np.random.seed(args.seed)
+    # torch.manual_seed(args.seed)
     paddle.seed(args.seed)
 
 
 def to_list(tensor):
-    return tensor.detach().cpu().tolist()
+    return tensor.cpu().tolist()
 
 
 def train(args, train_dataset, model, tokenizer):
@@ -78,7 +78,6 @@ def train(args, train_dataset, model, tokenizer):
         t_total = args.min_steps
         args.num_train_epochs = args.min_steps // (len(train_dataloader) // args.gradient_accumulation_steps) + 1
 
-
     # Prepare optimizer and schedule (linear warmup and decay)
     no_decay = ["bias", "LayerNorm.weight"]
     optimizer_grouped_parameters = [
@@ -99,8 +98,6 @@ def train(args, train_dataset, model, tokenizer):
         epsilon=args.adam_epsilon,
         grad_clip=clip,
         weight_decay=args.weight_decay)
-
-    # Check if saved optimizer or scheduler states exist
 
     # Train!
     logger.info("***** Running training *****")
@@ -132,11 +129,9 @@ def train(args, train_dataset, model, tokenizer):
     best_results = {"exact": 0, "f1": 0, "global_step": 0}
 
     for _ in train_iterator:
-        epoch_iterator = tqdm(train_dataloader, desc="Iteration")
-        for step, batch in enumerate(epoch_iterator):
+        for step, batch in enumerate(train_dataloader):
             if len(batch[0]) == 1:
                 continue
-
             # Skip past any already trained steps if resuming training
             if steps_trained_in_current_epoch > 0:
                 steps_trained_in_current_epoch -= 1
@@ -157,8 +152,8 @@ def train(args, train_dataset, model, tokenizer):
             }
 
             outputs = model(**inputs)
+
             loss = outputs[0]
-            print(loss.item())
 
             if args.gradient_accumulation_steps > 1:
                 loss = loss / args.gradient_accumulation_steps
@@ -214,7 +209,6 @@ def train(args, train_dataset, model, tokenizer):
                     logger.info("Saving optimizer and scheduler states to %s", output_dir)
 
             if args.max_steps > 0 and global_step > args.max_steps:
-                epoch_iterator.close()
                 break
 
         if args.max_steps > 0 and global_step > args.max_steps:
@@ -428,29 +422,16 @@ def load_and_cache_examples(args, tokenizer, evaluate=False, output_examples=Fal
     else:
         logger.info("Creating features from dataset file at %s", input_dir)
 
-        # 直接走else
-        if not args.data_dir and ((evaluate and not args.predict_file) or (not evaluate and not args.train_file)):
-            try:
-                import tensorflow_datasets as tfds
-            except ImportError:
-                raise ImportError("If not data_dir is specified, tensorflow_datasets needs to be installed.")
-
-            if args.version_2_with_negative:
-                logger.warning("tensorflow_datasets does not handle version 2 of SQuAD.")
-
-            tfds_examples = tfds.load("squad")
-            examples = SquadV1Processor().get_examples_from_dataset(tfds_examples, evaluate=evaluate)
+        if args.dataset_format == "mrqa":
+            processor = MRQAProcessor()
         else:
-            if args.dataset_format == "mrqa":
-                processor = MRQAProcessor()
-            else:
-                processor = SquadV2Processor() if args.version_2_with_negative else SquadV1Processor()
-            if evaluate:
-                examples = processor.get_dev_examples(args.data_dir, filename=args.predict_file)
-            else:
-                # print(args.data_dir, args.train_file)
-                # None ../mrqa-few-shot/squad/squad-train-seed-42-num-examples-16_qass.jsonl
-                examples = processor.get_train_examples(args.data_dir, filename=args.train_file)
+            processor = SquadV2Processor() if args.version_2_with_negative else SquadV1Processor()
+        if evaluate:
+            examples = processor.get_dev_examples(args.data_dir, filename=args.predict_file)
+        else:
+            # print(args.data_dir, args.train_file)
+            # None ../mrqa-few-shot/squad/squad-train-seed-42-num-examples-16_qass.jsonl
+            examples = processor.get_train_examples(args.data_dir, filename=args.train_file)
 
         # doc_stride 128    max_query_length 64   max_seq_length 384
         features, dataset = squad_convert_examples_to_features(
@@ -513,6 +494,7 @@ def getParser():
         required=True,
         help="The output directory where the model checkpoints and predictions will be written.",
     )
+    parser.add_argument("--output_dir_avg", default="output", type=str, required=True)
     parser.add_argument("--qass_head", default=False, type=str2bool, help="Whether to use QASS")
     parser.add_argument("--initialize_new_qass", default=True, type=str2bool, help="Whether to re-init QASS params")
 
@@ -699,11 +681,11 @@ def getParser():
                                                                          "naturalqa", "squad", "bioasq", "textbookqa"])
     parser.add_argument("--dont_output_nbest", action="store_true")
     parser.add_argument("--nbest_calculation", action="store_true")
+    parser.add_argument("--examples_num", default=16, type=int, help="16, 128 or 1024 examples")
+
     return parser
 
-def main():
-    args = getParser().parse_args()
-
+def main(args):
     assert args.dataset_format in ["mrqa", "squad"]
 
     if args.doc_stride >= args.max_seq_length - args.max_query_length:
@@ -847,7 +829,52 @@ def main():
     return results
 
 
+
+def AvgTraing():
+    args = getParser().parse_args()
+    examples_nums = [16, 128, 1024]
+    seed_ids = [42, 43, 44, 45, 46]
+    for e_num in examples_nums:
+        result_t = {}
+        exact, f1, total = [], [], []
+        HasAns_exact, HasAns_f1, HasAns_total = [], [], []
+        best_exact, best_exact_thresh, best_f1, best_f1_thresh = [], [], [], []
+        for seed_id in seed_ids:
+            temp_dir = args.output_dir
+            args.output_dir = temp_dir + "/output_seed{}_examples{}".format(seed_id, e_num)
+            args.train_file = \
+                "splinter-paddle/mrqa-few-shot/squad/squad-train-seed-{}-num-examples-{}_qass.jsonl".format(
+                    seed_id, e_num
+            )
+
+            results = main(args)
+
+            exact.append(results['exact'])
+            f1.append(results['f1'])
+            total.append(results['total'])
+            HasAns_exact.append(results['HasAns_exact'])
+            HasAns_f1.append(results['HasAns_f1'])
+            HasAns_total.append(results['HasAns_total'])
+            best_exact.append(results['best_exact'])
+            best_exact_thresh.append(results['best_exact_thresh'])
+            exact.append(results['best_f1'])
+            exact.append(results['best_f1_thresh'])
+            args.output_dir = temp_dir
+        result_t['exact'] = np.mean(np.array(exact))
+        result_t['f1'] = np.mean(np.array(f1))
+        result_t['total'] = np.mean(np.array(total))
+        result_t['HasAns_exact'] = np.mean(np.array(HasAns_exact))
+        result_t['HasAns_f1'] = np.mean(np.array(HasAns_f1))
+        result_t['HasAns_total'] = np.mean(np.array(HasAns_total))
+        result_t['best_exact'] = np.mean(np.array(best_exact))
+        result_t['best_exact_thresh'] = np.mean(np.array(best_exact_thresh))
+        result_t['best_f1'] = np.mean(np.array(best_f1))
+        result_t['best_f1_thresh'] = np.mean(np.array(best_f1_thresh))
+        result_t_filepath = args.output_dir_avg + "/examples{}_average.json".format(e_num)
+        pickle.dump(result_t, open(result_t_filepath, 'wb'))
+
+
 if __name__ == "__main__":
-    main()
-    # get_test_metric()
+    AvgTraing()
+
 
