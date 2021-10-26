@@ -108,7 +108,7 @@ $ python run.py \
 
 - `metric_diff`:[metric_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/3_check_metric/log_diff/metric_diff.txt)
 - `loss_diff`:[loss_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/4_check_loss/log_diff/loss_diff.txt)
-- `backward_diff`:[backward_diff.txt]([splinter-paddlepaddle/loss_diff.txt at main · ncpaddle/splinter-paddlepaddle (github.com)](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/5-7-8_check_optim-norm-backward/log_diff/loss_diff.txt))
+- `backward_diff`:[backward_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/5-7-8_check_optim-norm-backward/log_diff/loss_diff.txt)
 - `train_align`: experiment results
 
 More details about **align works** in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/tree/main/align_works#%E5%AF%B9%E9%BD%90%E5%B7%A5%E4%BD%9C%E8%AF%B4%E6%98%8E) .
