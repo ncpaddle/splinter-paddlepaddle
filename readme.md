@@ -48,12 +48,6 @@
 
 ## 4. Finetuning
 
-> You can git clone this repo to run our codes or use BaiDu AI Studio. 
->
-> We suggest you choose BaiDu AI Studio, this is our program [link](https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1). You can run our codes in AI Studio directly. 
->
-> Here's what you need to pay attention to if you choose git clone this repo.
-
 ### 4.1 Run Style
 
 1. Git clone this repo and download model parameters from  [Google Cloud share](https://drive.google.com/drive/folders/1RT9NvOMpmsfIV-q3jXksImV4aqz-gPQN?usp=sharing)
