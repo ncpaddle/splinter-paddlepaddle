@@ -2,25 +2,23 @@
 
 ## 1. Introduction
 
-- This repoitory contains a **paddle** implementation of the Splinter --- \<Few-Shot Question Answering by Pretraining Span Selection\>
-
-- Original Paper: \[2021ACL\][Few-Shot Question Answering by Pretraining Span Selection](https://arxiv.org/pdf/2101.00438v2.pdf)
-
-- Original Pytorch Implementation: [oriram/splinter (github.com)](https://github.com/oriram/splinter)
-
+- This repoitory contains a **paddle** implementation of the Splinter, which is a new question answering pretraining scheme based on few-shot learning. It comes from the 2021 ACL paper *Few-Shot Question Answering by Pretraining Span Selection* and uses **recurring span selection** to enhance the performance. 
+- **Paper**:  "[Few-Shot Question Answering by Pretraining Span Selection](https://arxiv.org/pdf/2101.00438v2.pdf)", to appear at ACL 2021.
+- **Original Pytorch Implementation**: [oriram/splinter (github.com)](https://github.com/oriram/splinter)
 - Dataset: **SQuAD**
 
 
 
 ## 2. Experiment Results
 
-- Original paper:
+We experimented with three few-shot scenarios (16, 128, 1024 examples) using classical dataset **SQuAD**, which is a representative part of the experiment in the paper. 
 
-|                | 16 examples F1 | 128 examples F1 | 1024 examples F1 |
-| -------------- | -------------- | --------------- | ---------------- |
-| Original Paper | 54.6           | 72.7            | 82.8             |
+|                          | 16 examples F1 | 128 examples F1 | 1024 examples F1 |
+| ------------------------ | -------------- | --------------- | ---------------- |
+| Original Paper's Results | 54.6           | **72.7**        | 82.8             |
+| Ours Results             | **55.62**      | 72.63           | **82.89**        |
 
-- Ours:
+- Ours More Detailed Results:
 
 | seed selection of train files | 16 examples F1 | 128 examples F1 | 1024 examples F1 |
 | ----------------------------- | -------------- | --------------- | ---------------- |
@@ -31,35 +29,48 @@
 | 46                            | 58.92          | 73.06           | 82.57            |
 | **Average**                   | **55.62**      | **72.63**       | **82.89**        |
 
+We can find the instability of few-shot learning. The more samples in the training set, the more stable the results will be, which is consistent with our intuition. 
 
-## 3. Folders
+
+
+## 3. Code Structure
 
 - `align_works`: Our all align works about paddleimplementation;
-
+  - `1_check_forward`: the align works about the forward training;
+  - `2_check_devdata_testdata`: the align works about dev dataset and test dataset;
+  - `3_check_metirc`: the align works about metric;
+  - ......
+  - `10_check_network_params_init`: the align works about model's parameters init;
 - `finetuning`: finetuning codes of Splinter using paddle framework;
-
 - `mrqa-few-shot/squad`: SQuAD dataset;
 - `paddlenlp`: changed edition by us based on [paddlepaddle/paddlenlp](https://github.com/PaddlePaddle/PaddleNLP);
-
 - [`reprod_log`](https://github.com/WenmuZhou/reprod_log/blob/master/README.md): a third-party library using checking precision between torch's codes and paddle's codes;
 - `splinter_init`: model's params and configs.
 
 
 
-## 4. Finetuning
+## 4. Environment
 
-### 4.1 Run Style
+- Hardward: GPU, CPU
+- Framework:
+  - PaddlePaddle >= 2.0.0
+
+
+
+## 5. Quick start
+
+### 5.1 Run Style
 
 1. Git clone this repo and download model parameters from  [Google Cloud share](https://drive.google.com/drive/folders/1RT9NvOMpmsfIV-q3jXksImV4aqz-gPQN?usp=sharing)
    1. splinter ---> align_works/splinter
    2. splinter_init ---> splinter_init
-2. Runing our codes in BaiDu AI Studio. Choosing **`Splinter-paddle`** edition from this [link](https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1) and runing the program. 
+2. Runing our codes in **BaiDu AI Studio**. Choosing **`Splinter-paddle`** edition from this [link](https://aistudio.baidu.com/aistudio/projectdetail/2503997?shared=1) and runing the program. 
 
 > *We suggest you choose the AI Studio.*
 
 
 
-### 4.2 Run Scripts
+### 5.2 Run Scripts
 
 - We can obtain the average experiment results by the script that can run all of the sampled datasets. 
 
@@ -124,7 +135,7 @@ python splinter-paddle/finetuning/run.py \
 
 
 
-## 5. Align Works
+## 6. Align Works
 
 - `forward_diff`: [model_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/1_check_forward/log_diff/model_diff.txt)
 

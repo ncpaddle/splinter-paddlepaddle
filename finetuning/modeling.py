@@ -2,7 +2,7 @@ import paddle
 import paddle.nn as nn
 from paddlenlp.transformers import BertPretrainedModel, BertModel, RobertaModel, BertForQuestionAnswering, PretrainedModel
 import numpy as np
-
+from paddlenlp.transformers import PretrainedTokenizer
 
 def torch_gather(x, dim, index):
     index_shape = index.shape
