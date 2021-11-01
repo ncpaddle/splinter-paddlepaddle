@@ -43,6 +43,7 @@ We can find the instability of few-shot learning. The more samples in the traini
   - `10_check_network_params_init`: the align works about model's parameters init;
 - `finetuning`: finetuning codes of Splinter using paddle framework;
 - `mrqa-few-shot/squad`: SQuAD dataset;
+- `output_avg`: the experiment results;
 - `paddlenlp`: changed edition by us based on [paddlepaddle/paddlenlp](https://github.com/PaddlePaddle/PaddleNLP);
 - [`reprod_log`](https://github.com/WenmuZhou/reprod_log/blob/master/README.md): a third-party library using checking precision between torch's codes and paddle's codes;
 - `splinter_init`: model's params and configs.
@@ -144,5 +145,5 @@ python splinter-paddle/finetuning/run.py \
 - `backward_diff`:[backward_diff.txt](https://github.com/ncpaddle/splinter-paddlepaddle/blob/main/align_works/5-7-8_check_optim-norm-backward/log_diff/loss_diff.txt)
 - `train_align`: experiment results
 
-More details about **align works** in [readme.md](https://github.com/ncpaddle/splinter-paddlepaddle/tree/main/align_works#%E5%AF%B9%E9%BD%90%E5%B7%A5%E4%BD%9C%E8%AF%B4%E6%98%8E) .
+More details about **align works** in [here](https://github.com/ncpaddle/splinter-paddlepaddle/tree/main/align_works#%E5%AF%B9%E9%BD%90%E5%B7%A5%E4%BD%9C%E8%AF%B4%E6%98%8E) .
 
